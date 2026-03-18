@@ -35,7 +35,8 @@
         .current-target-arrows { font-size: 0.85em; color: #2196F3; font-weight: bold; background: #e3f2fd; padding: 2px 6px; border-radius: 4px; }
         .res-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
         .avg-tag { font-size: 0.75em; color: #666; font-weight: normal; }
-        .history-item { text-align: left; padding: 15px 12px; border-bottom: 1px solid #eee; background: white; margin-bottom: 5px; border-radius: 10px; cursor: pointer; }
+        .history-item { text-align: left; padding: 15px 12px; border-bottom: 1px solid #eee; background: white; margin-bottom: 5px; border-radius: 10px; cursor: pointer; transition: opacity 0.3s; -webkit-tap-highlight-color: transparent; }
+        .history-item:active { opacity: 0.6; }
         .h-top { display: flex; justify-content: space-between; align-items: center; }
         .h-score { font-size: 1.6em; font-weight: 900; color: var(--accent); }
         .h-details { display: none; margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px; }
@@ -88,6 +89,7 @@
 
     <div id="sHistory">
         <h3>Historie (1. střelec)</h3>
+        <p style="font-size: 0.7em; color: #888; margin-top: -10px;">(podržte položku pro smazání)</p>
         <div id="graphContainer"></div>
         <div id="historyList"></div>
         <button class="green" style="margin-top: 20px;" onclick="goHome()">ZPĚT NA ÚVOD</button>
@@ -112,9 +114,10 @@
 
         let archers = []; let scores = {}; let hits = {}; let totalArrowsShot = {};
         let targetLog = {}; let tc, ac, ct = 1, ci = 0, as = 0, canUndo = false;
-        
+        let pressTimer;
+
         window.onload = function() {
-            syncFirebase(0); // Načte globální počet šípů při startu
+            syncFirebase(0);
         };
 
         const targetColors = ["#FFEBEE", "#E3F2FD", "#F1F8E9", "#FFF3E0", "#F3E5F5", "#E0F2F1", "#FFFDE7", "#F5F5F5"];
@@ -153,16 +156,13 @@
             scores[name] += p; 
             hits[name][p]++; 
             totalArrowsShot[name]++;
-            
             syncFirebase(1);
-
             document.body.style.transition = "none";
             document.body.style.filter = "brightness(0.7)";
             setTimeout(() => {
                 document.body.style.transition = "filter 0.3s ease";
                 document.body.style.filter = "brightness(1)";
             }, 50);
-
             as++;
             if (as >= ac) { as = 0; ci++; }
             if (ci >= archers.length) { 
@@ -280,7 +280,10 @@
                         if(t.length > 0) tRows += `<div class="detail-row"><span>T${idx+1}</span><span>(${t.join(",")})</span><b>${tSum}b</b></div>`;
                     });
                 }
-                lHtml += `<div class="history-item" onclick="toggleDetail(${r.id})">
+                lHtml += `<div class="history-item" 
+                            onmousedown="startPress(${r.id})" onmouseup="endPress(${r.id})" 
+                            ontouchstart="startPress(${r.id})" ontouchend="endPress(${r.id})"
+                            onclick="toggleDetail(${r.id})">
                     <div class="h-top"><div><b>${r.date}</b><br><small>Ø ${r.avg}</small></div><div class="h-score">${r.pts}</div></div>
                     <div class="h-details" id="det-${r.id}" onclick="event.stopPropagation()">${tRows}<button class="share-btn-small" onclick="shareOne(${r.id})">SDÍLET DETAILNÍ VÝSLEDEK</button></div>
                 </div>`;
@@ -288,9 +291,28 @@
             document.getElementById('historyList').innerHTML = lHtml || "Žádné záznamy.";
         }
 
+        function startPress(id) {
+            pressTimer = setTimeout(() => {
+                if (confirm("Smazat tento záznam z historie?")) {
+                    deleteHistoryItem(id);
+                }
+            }, 600);
+        }
+
+        function endPress() {
+            clearTimeout(pressTimer);
+        }
+
+        function deleteHistoryItem(id) {
+            let h = JSON.parse(localStorage.getItem('archery_history') || "[]");
+            h = h.filter(item => item.id !== id);
+            localStorage.setItem('archery_history', JSON.stringify(h));
+            renderHistory();
+        }
+
         function toggleDetail(id) {
             let el = document.getElementById('det-' + id);
-            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+            if (el) el.style.display = (el.style.display === 'block') ? 'none' : 'block';
         }
 
         function shareOne(id) {
@@ -310,4 +332,4 @@
         function clearAllHistory() { if(confirm("Smazat všechnu historii?")) { localStorage.removeItem('archery_history'); renderHistory(); } }
     </script>
 </body>
-</html>>
+</html>
