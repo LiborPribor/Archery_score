@@ -18,6 +18,10 @@
         .global-counter { font-size: 1.1em; color: #333; font-weight: bold; font-family: monospace; letter-spacing: 1px; }
         .global-num { color: var(--accent); font-size: 1.2em; }
 
+        /* Jazykový přepínač */
+        .lang-switch { margin-top: 15px; font-size: 0.9em; }
+        .lang-btn { cursor: pointer; padding: 5px 10px; text-decoration: underline; color: #2196F3; font-weight: bold; }
+
         #info { font-size: 1.1em; margin-bottom: 5px; }
         .highlight { font-size: 2.2em; color: var(--accent); font-weight: 900; vertical-align: middle; line-height: 1; }
         .arrow-num { font-size: 1.6em; font-weight: bold; color: #333; vertical-align: middle; }
@@ -48,19 +52,23 @@
 <body>
 
     <div id="s1">
-        <h2 style="margin-top:0">🎯 Archery Score</h2>
+        <h2 id="t-title" style="margin-top:0">🎯 Archery Score</h2>
         <div class="card">
             <input type="number" id="inT" placeholder="Počet terčů" inputmode="numeric">
             <input type="number" id="inA" placeholder="Šípů na terč" inputmode="numeric">
             <input type="text" id="inN" placeholder="Jméno střelce">
-            <button class="green" type="button" onclick="addArcher()">PŘIDAT STŘELCE</button>
+            <button id="t-addBtn" class="green" type="button" onclick="addArcher()">PŘIDAT STŘELCE</button>
             <div id="listDisplay" style="margin: 10px 0; font-weight: bold;">Střelci: žádní</div>
         </div>
-        <button class="green" style="background: #222;" type="button" onclick="startRace()">START ZÁVODU</button>
-        <button style="background: #fff; color: #333; margin-top:20px; border: 1px solid #ccc;" type="button" onclick="showHistory()">HISTORIE</button>
+        <button id="t-startBtn" class="green" style="background: #222;" type="button" onclick="startRace()">START ZÁVODU</button>
+        <button id="t-histBtn" style="background: #fff; color: #333; margin-top:20px; border: 1px solid #ccc;" type="button" onclick="showHistory()">HISTORIE</button>
 
         <div class="footer-counter">
-            <div class="global-counter">Globálně vystřeleno: <span id="globalCounter" class="global-num">...</span> šípů</div>
+            <div class="global-counter"><span id="t-globLabel">Globálně vystřeleno:</span> <span id="globalCounter" class="global-num">...</span> <span id="t-arrowsLabel">šípů</span></div>
+            <div class="lang-switch">
+                <span class="lang-btn" onclick="changeLang('cs')">CZ</span> | 
+                <span class="lang-btn" onclick="changeLang('en')">EN</span>
+            </div>
             <div style="font-size: 0.7em; color: #aaa; margin-top: 10px;">by LiborPribor</div>
         </div>
     </div>
@@ -77,27 +85,59 @@
         </div>
         <button id="btnUndo" style="background:#ffcc00; opacity:0.2" onclick="zpet()">ZPĚT (POSLEDNÍ ŠÍP)</button>
         <div id="res" class="card" style="text-align: left;"></div>
-        <button style="margin-top: 20px; background:#888; color:white; font-size: 0.8em;" onclick="confirmExit()">UKONČIT ZÁVOD</button>
+        <button id="t-exitBtn" style="margin-top: 20px; background:#888; color:white; font-size: 0.8em;" onclick="confirmExit()">UKONČIT ZÁVOD</button>
     </div>
 
     <div id="sFinish">
-        <h1>🏆 VÝSLEDKY</h1>
+        <h1 id="t-finTitle">🏆 VÝSLEDKY</h1>
         <div id="finalTable" class="card" style="text-align: left;"></div>
-        <button class="green" onclick="shareFinal()">SDÍLET CELKOVÉ VÝSLEDKY</button>
-        <button style="background: #222; color:white;" onclick="confirmRestart()">NOVÝ ZÁVOD</button>
+        <button id="t-shareFinalBtn" class="green" onclick="shareFinal()">SDÍLET CELKOVÉ VÝSLEDKY</button>
+        <button id="t-newBtn" style="background: #222; color:white;" onclick="confirmRestart()">NOVÝ ZÁVOD</button>
     </div>
 
     <div id="sHistory">
-        <h3>Historie (1. střelec)</h3>
-        <p style="font-size: 0.7em; color: #888; margin-top: -10px;">(podržte položku pro smazání)</p>
+        <h3 id="t-histTitle">Historie (1. střelec)</h3>
+        <p id="t-lpLabel" style="font-size: 0.7em; color: #888; margin-top: -10px;">(podržte položku pro smazání)</p>
         <div id="graphContainer"></div>
         <div id="historyList"></div>
-        <button class="green" style="margin-top: 20px;" onclick="goHome()">ZPĚT NA ÚVOD</button>
-        <button style="background:#ff5252; color:white; margin-top:10px; font-size: 0.8em; opacity: 0.5;" onclick="clearAllHistory()">SMAZAT VŠE</button>
+        <button id="t-homeBtn" class="green" style="margin-top: 20px;" onclick="goHome()">ZPĚT NA ÚVOD</button>
+        <button id="t-clearBtn" style="background:#ff5252; color:white; margin-top:10px; font-size: 0.8em; opacity: 0.5;" onclick="clearAllHistory()">SMAZAT VŠE</button>
     </div>
 
     <script>
         const DB_URL = "https://archeryscore-d138a-default-rtdb.europe-west1.firebasedatabase.app/.json";
+
+        // SLOVNÍK
+        const texts = {
+            cs: { title: "🎯 Archery Score", inT: "Počet terčů", inA: "Šípů na terč", inN: "Jméno střelce", add: "PŘIDAT STŘELCE", start: "START ZÁVODU", hist: "HISTORIE", glob: "Globálně vystřeleno:", arrows: "šípů", exit: "UKONČIT ZÁVOD", fin: "🏆 VÝSLEDKY", share: "SDÍLET CELKOVÉ VÝSLEDKY", new: "NOVÝ ZÁVOD", hTitle: "Historie (1. střelec)", lp: "(podržte položku pro smazání)", home: "ZPĚT NA ÚVOD", clear: "SMAZAT VŠE", target: "Terč", arrow: "Šíp", undo: "ZPĚT (POSLEDNÍ ŠÍP)", list: "Střelci:", waiting: "čeká...", current: "PRŮBĚŽNĚ:", archersNone: "žádní", alertMiss: "Chybí údaje!", confirmExit: "Opravdu ukončit?", confirmNew: "Nový závod?", confirmClear: "Smazat všechnu historii?", confirmDel: "Smazat tento záznam z historie?", shareOne: "SDÍLET DETAILNÍ VÝSLEDEK" },
+            en: { title: "🎯 Archery Score", inT: "Targets", inA: "Arrows per target", inN: "Archer name", add: "ADD ARCHER", start: "START RACE", hist: "HISTORY", glob: "Global total:", arrows: "arrows", exit: "EXIT RACE", fin: "🏆 RESULTS", share: "SHARE RESULTS", new: "NEW RACE", hTitle: "History (1st archer)", lp: "(long press to delete)", home: "HOME", clear: "CLEAR ALL", target: "Target", arrow: "Arrow", undo: "UNDO (LAST ARROW)", list: "Archers:", waiting: "waiting...", current: "CURRENT SCORE:", archersNone: "none", alertMiss: "Missing data!", confirmExit: "Confirm exit?", confirmNew: "New race?", confirmClear: "Clear all history?", confirmDel: "Delete this record?", shareOne: "SHARE DETAILED RESULT" }
+        };
+
+        let L = localStorage.getItem('arch_lang') || (navigator.language.startsWith('en') ? 'en' : 'cs');
+        function changeLang(code) { localStorage.setItem('arch_lang', code); location.reload(); }
+
+        function applyTexts() {
+            const T = texts[L];
+            document.getElementById('t-title').innerText = T.title;
+            document.getElementById('inT').placeholder = T.inT;
+            document.getElementById('inA').placeholder = T.inA;
+            document.getElementById('inN').placeholder = T.inN;
+            document.getElementById('t-addBtn').innerText = T.add;
+            document.getElementById('t-startBtn').innerText = T.start;
+            document.getElementById('t-histBtn').innerText = T.hist;
+            document.getElementById('t-globLabel').innerText = T.glob;
+            document.getElementById('t-arrowsLabel').innerText = T.arrows;
+            document.getElementById('t-exitBtn').innerText = T.exit;
+            document.getElementById('btnUndo').innerText = T.undo;
+            document.getElementById('t-finTitle').innerText = T.fin;
+            document.getElementById('t-shareFinalBtn').innerText = T.share;
+            document.getElementById('t-newBtn').innerText = T.new;
+            document.getElementById('t-histTitle').innerText = T.hTitle;
+            document.getElementById('t-lpLabel').innerText = T.lp;
+            document.getElementById('t-homeBtn').innerText = T.home;
+            document.getElementById('t-clearBtn').innerText = T.clear;
+            document.getElementById('listDisplay').innerHTML = T.list + " " + T.archersNone;
+        }
 
         async function syncFirebase(val) {
             try {
@@ -117,6 +157,7 @@
         let pressTimer;
 
         window.onload = function() {
+            applyTexts();
             syncFirebase(0);
         };
 
@@ -133,7 +174,7 @@
             if (name) {
                 archers.push(name); scores[name] = 0; totalArrowsShot[name] = 0;
                 hits[name] = {11:0, 10:0, 8:0, 5:0, 0:0}; targetLog[name] = [];
-                document.getElementById('listDisplay').innerHTML = "Střelci: " + archers.join(", ");
+                document.getElementById('listDisplay').innerHTML = texts[L].list + " " + archers.join(", ");
                 input.value = "";
             }
         }
@@ -146,7 +187,7 @@
                 archers.forEach(n => { targetLog[n] = Array.from({length: tc}, () => []); });
                 showScreen('s2');
                 updateUI();
-            } else { alert("Chybí údaje!"); }
+            } else { alert(texts[L].alertMiss); }
         }
 
         function bod(p) {
@@ -194,18 +235,19 @@
         }
 
         function updateUI() {
+            const T = texts[L];
             document.body.style.backgroundColor = targetColors[(ct - 1) % targetColors.length];
-            document.getElementById('info').innerHTML = `Terč: <span class='highlight'>${ct}</span>/${tc} | Šíp: <span class="arrow-num">${as+1}</span>/${ac}`;
+            document.getElementById('info').innerHTML = `${T.target}: <span class='highlight'>${ct}</span>/${tc} | ${T.arrow}: <span class="arrow-num">${as+1}</span>/${ac}`;
             document.getElementById('who').innerText = archers[ci];
             document.getElementById('btnUndo').style.opacity = canUndo ? "1" : "0.2";
-            let txt = "<b>PRŮBĚŽNĚ:</b><br>";
+            let txt = `<b>${T.current}</b><br>`;
             archers.forEach(n => {
                 let displayIdx = ct - 1;
                 let isOld = false;
                 if (targetLog[n][displayIdx].length === 0 && ct > 1) { displayIdx = ct - 2; isOld = true; }
                 let currentArrows = (targetLog[n][displayIdx] && targetLog[n][displayIdx].length > 0) 
                     ? `<span class="current-target-arrows" style="${isOld ? 'background:#eee; color:#666' : ''}">${targetLog[n][displayIdx].join(", ")}</span>` 
-                    : `<span style="color:#ccc; font-size:0.8em">čeká...</span>`;
+                    : `<span style="color:#ccc; font-size:0.8em">${T.waiting}</span>`;
                 let curAvg = totalArrowsShot[n] > 0 ? (scores[n] / totalArrowsShot[n]).toFixed(1) : "0.0";
                 txt += `<div class="res-row" style="${isOld ? 'opacity: 0.7' : ''}">
                             <div style="text-align:left"><b>${n}</b> ${isOld ? '<small>(T'+(ct-1)+')</small>' : ''}<br>${currentArrows}</div>
@@ -241,7 +283,7 @@
             let main = archers[0];
             h.push({ 
                 id: Date.now(), 
-                date: new Date().toLocaleDateString('cs-CZ') + " " + new Date().toLocaleTimeString('cs-CZ', {hour: '2-digit', minute:'2-digit'}), 
+                date: new Date().toLocaleDateString(L==='cs'?'cs-CZ':'en-US') + " " + new Date().toLocaleTimeString(L==='cs'?'cs-CZ':'en-US', {hour: '2-digit', minute:'2-digit'}), 
                 pts: scores[main], 
                 avg: (scores[main] / (totalArrowsShot[main] || 1)).toFixed(2), 
                 details: {...hits[main]}, 
@@ -251,7 +293,8 @@
         }
 
         function shareFinal() { 
-            let text = "🎯 VÝSLEDKY LUKOSTŘELBY\n━━━━━━━━━━━━━━\n";
+            let text = L==='cs'?"🎯 VÝSLEDKY LUKOSTŘELBY\n":"🎯 ARCHERY RESULTS\n";
+            text += "━━━━━━━━━━━━━━\n";
             let sorted = [...archers].sort((a,b) => scores[b] - scores[a]);
             text += sorted.map((n, i) => {
                 let h = hits[n];
@@ -259,7 +302,7 @@
                 return `${i+1}. ${n}: ${scores[n]} b. (Ø ${avg})\n   [11:${h[11]}, 10:${h[10]}, 8:${h[8]}, 5:${h[5]}, 0:${h[0]}]`;
             }).join("\n\n");
             text += "\n\nby LiborPribor";
-            if (navigator.share) navigator.share({ title: 'Výsledky závodu', text: text }); else alert(text);
+            if (navigator.share) navigator.share({ title: 'Results', text: text }); else alert(text);
         }
 
         function renderHistory() {
@@ -285,23 +328,21 @@
                             ontouchstart="startPress(${r.id})" ontouchend="endPress(${r.id})"
                             onclick="toggleDetail(${r.id})">
                     <div class="h-top"><div><b>${r.date}</b><br><small>Ø ${r.avg}</small></div><div class="h-score">${r.pts}</div></div>
-                    <div class="h-details" id="det-${r.id}" onclick="event.stopPropagation()">${tRows}<button class="share-btn-small" onclick="shareOne(${r.id})">SDÍLET DETAILNÍ VÝSLEDEK</button></div>
+                    <div class="h-details" id="det-${r.id}" onclick="event.stopPropagation()">${tRows}<button class="share-btn-small" onclick="shareOne(${r.id})">${texts[L].shareOne}</button></div>
                 </div>`;
             });
-            document.getElementById('historyList').innerHTML = lHtml || "Žádné záznamy.";
+            document.getElementById('historyList').innerHTML = lHtml || (L==='cs'?"Žádné záznamy.":"No records.");
         }
 
         function startPress(id) {
             pressTimer = setTimeout(() => {
-                if (confirm("Smazat tento záznam z historie?")) {
+                if (confirm(texts[L].confirmDel)) {
                     deleteHistoryItem(id);
                 }
             }, 600);
         }
 
-        function endPress() {
-            clearTimeout(pressTimer);
-        }
+        function endPress() { clearTimeout(pressTimer); }
 
         function deleteHistoryItem(id) {
             let h = JSON.parse(localStorage.getItem('archery_history') || "[]");
@@ -319,7 +360,7 @@
             let history = JSON.parse(localStorage.getItem('archery_history') || "[]");
             let r = history.find(i => i.id === id);
             if (!r) return;
-            let text = `🎯 ARCHERY SCORE\n📅 ${r.date}\n━━━━━━━━━━━━\nCelkem: ${r.pts} b. (Ø ${r.avg})\n\n🏹 TERČE:\n`;
+            let text = `🎯 ARCHERY SCORE\n📅 ${r.date}\n━━━━━━━━━━━━\nTotal: ${r.pts} b. (Ø ${r.avg})\n\n🏹 TARGETS:\n`;
             r.targets.forEach((t, i) => { if(t.length > 0) text += `T${(i+1).toString().padStart(2,'0')}: (${t.join(",")}) = ${t.reduce((a,b)=>a+b,0)}b\n`; });
             text += "\nby LiborPribor";
             if (navigator.share) navigator.share({title: 'Archery Detail', text: text}); else alert(text);
@@ -327,9 +368,9 @@
 
         function showHistory() { showScreen('sHistory'); renderHistory(); }
         function goHome() { location.reload(); }
-        function confirmExit() { if(confirm("Opravdu ukončit?")) goHome(); }
-        function confirmRestart() { if(confirm("Nový závod?")) goHome(); }
-        function clearAllHistory() { if(confirm("Smazat všechnu historii?")) { localStorage.removeItem('archery_history'); renderHistory(); } }
+        function confirmExit() { if(confirm(texts[L].confirmExit)) goHome(); }
+        function confirmRestart() { if(confirm(texts[L].confirmNew)) goHome(); }
+        function clearAllHistory() { if(confirm(texts[L].confirmClear)) { localStorage.removeItem('archery_history'); renderHistory(); } }
     </script>
 </body>
 </html>
