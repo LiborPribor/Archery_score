@@ -140,20 +140,33 @@
         }
 
         async function syncFirebase(arrows, raceVal = 0) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2500); // 2.5s timeout pro offline
+
             try {
-                const resp = await fetch(DB_URL);
+                const resp = await fetch(DB_URL, { signal: controller.signal });
                 const data = await resp.json();
+                clearTimeout(timeoutId);
+
                 let curA = (data && data.global_arrows) ? data.global_arrows : 0;
                 let curR = (data && data.global_races) ? data.global_races : 0;
                 
                 if (arrows !== 0 || raceVal !== 0) {
                     curA += arrows;
                     curR += raceVal;
-                    await fetch(DB_URL, { method: 'PATCH', body: JSON.stringify({ global_arrows: curA, global_races: curR }) });
+                    fetch(DB_URL, { 
+                        method: 'PATCH', 
+                        body: JSON.stringify({ global_arrows: curA, global_races: curR }),
+                        signal: controller.signal 
+                    }).catch(e => console.log("Offline write"));
                 }
                 document.getElementById('globalCounter').innerText = curA.toLocaleString();
                 document.getElementById('globalRaces').innerText = curR.toLocaleString();
-            } catch (e) { console.log("Firebase error"); }
+            } catch (e) { 
+                console.log("Offline mode active");
+                document.getElementById('globalCounter').innerText = "offline";
+                document.getElementById('globalRaces').innerText = "offline";
+            }
         }
 
         let archers = []; let scores = {}; let hits = {}; let totalArrowsShot = {};
@@ -298,7 +311,6 @@
         }
 
         function shareFinal() { 
-            // ZDE UPRAVENA HLAVIČKA DLE ZADÁNÍ
             let now = new Date();
             let dateStr = now.toLocaleDateString('cs-CZ') + " " + now.toLocaleTimeString('cs-CZ', {hour: '2-digit', minute:'2-digit'});
             let text = `🎯 ARCHERY SCORE\n📅 ${dateStr}\n━━━━━━━━━━━━━━\n`;
@@ -349,21 +361,17 @@
                 }
             }, 600);
         }
-
         function endPress() { clearTimeout(pressTimer); }
-
         function deleteHistoryItem(id) {
             let h = JSON.parse(localStorage.getItem('archery_history') || "[]");
             h = h.filter(item => item.id !== id);
             localStorage.setItem('archery_history', JSON.stringify(h));
             renderHistory();
         }
-
         function toggleDetail(id) {
             let el = document.getElementById('det-' + id);
             if (el) el.style.display = (el.style.display === 'block') ? 'none' : 'block';
         }
-
         function shareOne(id) {
             let history = JSON.parse(localStorage.getItem('archery_history') || "[]");
             let r = history.find(i => i.id === id);
@@ -373,9 +381,13 @@
             text += "\nby LiborPribor";
             if (navigator.share) navigator.share({title: 'Archery Detail', text: text}); else alert(text);
         }
-
         function showHistory() { showScreen('sHistory'); renderHistory(); }
-        function goHome() { location.reload(); }
+        
+        function goHome() { 
+            showScreen('s1'); 
+            syncFirebase(0, 0); // Zkusí načíst data, pokud se mezitím objevil signál
+        }
+        
         function confirmExit() { if(confirm(texts[L].confirmExit)) goHome(); }
         function confirmRestart() { if(confirm(texts[L].confirmNew)) goHome(); }
         function clearAllHistory() { if(confirm(texts[L].confirmClear)) { localStorage.removeItem('archery_history'); renderHistory(); } }
