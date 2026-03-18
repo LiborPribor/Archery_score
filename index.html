@@ -3,15 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#4CAF50">
-    
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1041/1041049.png">
-    <link rel="manifest" href="data:application/json,{'name':'Archery Score','short_name':'Archery','start_url':'.','display':'standalone','background_color':'#f4f4f9','theme_color':'#4CAF50'}">
-
     <title>Archery Score</title>
     <style>
         :root { --primary: #4CAF50; --accent: #E64A19; --bg: #f4f4f9; }
@@ -150,7 +141,7 @@
 
         async function syncFirebase(arrows, raceVal = 0) {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2500); 
+            const timeoutId = setTimeout(() => controller.abort(), 2500); // 2.5s timeout pro offline
 
             try {
                 const resp = await fetch(DB_URL, { signal: controller.signal });
@@ -389,11 +380,11 @@
             r.targets.forEach((t, i) => { if(t.length > 0) text += `T${(i+1).toString().padStart(2,'0')}: (${t.join(",")}) = ${t.reduce((a,b)=>a+b,0)}b\n`; });
             text += "\nby LiborPribor";
             if (navigator.share) navigator.share({title: 'Archery Detail', text: text}); else alert(text);
-        }root { --primary: #4CAF50; --accent: #E64A19; --bg: #f4f4f9; }
-        b
+        }
         function showHistory() { showScreen('sHistory'); renderHistory(); }
         
         function goHome() { 
+            // Resetování všech proměnných souvisejících s aktuálním závodem a střelci
             archers = [];
             scores = {};
             hits = {};
@@ -402,6 +393,7 @@
             ct = 1; ci = 0; as = 0;
             canUndo = false;
             
+            // Resetování textových polí a zobrazení v UI
             document.getElementById('listDisplay').innerHTML = texts[L].list + " " + texts[L].archersNone;
             document.getElementById('inN').value = "";
             document.body.style.backgroundColor = "#f4f4f9";
