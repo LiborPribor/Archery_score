@@ -1,0 +1,18 @@
+{
+  "short_name": "Archery",
+  "name": "Archery Score",
+  "description": "Jednoduché počítadlo skóre pro lukostřelbu.",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/610/610064.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#4CAF50",
+  "background_color": "#f4f4f9"
+}
