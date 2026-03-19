@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <title>Archery Score</title>
+    <title>3D Archery Score</title>
 
     <link rel="manifest" href="manifest.json">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Archery Score">
+    <meta name="apple-mobile-web-app-title" content="3D Archery Score">
     
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/610/610064.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/610/610064.png">
@@ -30,7 +30,6 @@
             transition: background-color 0.5s ease; 
             -webkit-touch-callout: none; 
             touch-action: manipulation;
-            /* Ochrana proti překrytí výřezem u iPhonů */
             padding: env(safe-area-inset-top) 20px 20px 20px; 
         }
 
@@ -75,13 +74,54 @@
         .hits-summary { font-size: 0.8em; color: #555; background: #f0f0f0; padding: 6px; border-radius: 6px; margin-top: 8px; }
         
         .title-icon { width: 28px; vertical-align: middle; margin-right: 10px; margin-top: -4px; }
+
+        .coffee-btn { 
+            background: #1a1a1a; color: #ffffff; padding: 10px 18px; border-radius: 12px; 
+            display: inline-flex; align-items: center; justify-content: center; 
+            font-weight: bold; font-size: 0.85em; border: 1px solid #444; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); text-decoration: none;
+            margin: 15px 0; transition: transform 0.1s;
+        }
+        .coffee-btn:active { transform: scale(0.95); }
+
+        /* --- NOVÉ: Styl pro Help tlačítko a okno --- */
+        .help-trigger {
+            position: fixed; bottom: 20px; right: 20px; width: 44px; height: 44px;
+            background: white; border: 2px solid var(--primary); color: var(--primary);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 1.5em; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            cursor: pointer; z-index: 999;
+        }
+        #helpModal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .help-content {
+            background: white; width: 85%; max-width: 400px; padding: 25px; border-radius: 20px;
+            text-align: left; position: relative; max-height: 80vh; overflow-y: auto;
+        }
+        .help-content h3 { margin-top: 0; color: var(--primary); }
+        .help-content ul { padding-left: 20px; line-height: 1.5; }
+        .help-content li { margin-bottom: 10px; color: #444; }
     </style>
 </head>
 <body>
 
+    <div class="help-trigger" onclick="toggleHelp(true)">?</div>
+
+    <div id="helpModal" onclick="toggleHelp(false)">
+        <div class="help-content" onclick="event.stopPropagation()">
+            <h3 id="t-helpTitle">Nápověda</h3>
+            <ul id="t-helpBody">
+                </ul>
+            <button class="green" onclick="toggleHelp(false)">OK</button>
+        </div>
+    </div>
+
     <div id="s1">
         <h2 id="t-title" style="margin-top:0">
-            <img src="https://cdn-icons-png.flaticon.com/512/610/610064.png" class="title-icon">Archery Score
+            <img src="https://cdn-icons-png.flaticon.com/512/610/610064.png" class="title-icon">3D Archery Score
         </h2>
         
         <div class="card">
@@ -97,6 +137,11 @@
         <div class="footer-counter">
             <div class="global-counter"><span id="t-globLabel">Vystřeleno:</span> <span id="globalCounter" class="global-num">...</span> <span id="t-arrowsLabel">šípů</span></div>
             <div class="global-counter"><span id="t-racesLabel">Závodů:</span> <span id="globalRaces" class="global-num">...</span></div>
+            
+            <a href="https://revolut.me/liborpribor/" target="_blank" class="coffee-btn">
+                <span id="t-coffeeBtn">☕ Pozvat autora na kafe</span>
+            </a>
+
             <div class="lang-switch">
                 <span class="lang-btn" onclick="changeLang('cs')">CZ</span> | 
                 <span class="lang-btn" onclick="changeLang('en')">EN</span>
@@ -140,12 +185,25 @@
         const DB_URL = "https://archeryscore-d138a-default-rtdb.europe-west1.firebasedatabase.app/.json";
 
         const texts = {
-            cs: { title: "Archery Score", inT: "Počet terčů", inA: "Šípů na terč", inN: "Jméno střelce", add: "PŘIDAT STŘELCE", start: "START ZÁVODU", hist: "HISTORIE", glob: "Vystřeleno:", arrows: "šípů", races: "Závodů:", exit: "UKONČIT ZÁVOD", fin: "🏆 VÝSLEDKY", share: "SDÍLET CELKOVÉ VÝSLEDKY", new: "NOVÝ ZÁVOD", hTitle: "Historie (1. střelec)", lp: "(podržte položku pro smazání)", home: "ZPĚT NA ÚVOD", clear: "SMAZAT VŠE", target: "Terč", arrow: "Šíp", undo: "ZPĚT (POSLEDNÍ ŠÍP)", list: "Střelci:", waiting: "čeká...", current: "PRŮBĚŽNĚ:", archersNone: "žádní", alertMiss: "Chybí údaje!", confirmExit: "Opravdu ukončit?", confirmNew: "Nový závod?", confirmClear: "Smazat všechnu historii?", confirmDel: "Smazat tento záznam z historie?", shareOne: "SDÍLET DETAILNÍ VÝSLEDEK" },
-            en: { title: "Archery Score", inT: "Targets", inA: "Arrows per target", inN: "Archer name", add: "ADD ARCHER", start: "START RACE", hist: "HISTORY", glob: "Total arrows:", arrows: "arrows", races: "Races:", exit: "EXIT RACE", fin: "🏆 RESULTS", share: "SHARE RESULTS", new: "NEW RACE", hTitle: "History (1st archer)", lp: "(long press to delete)", home: "HOME", clear: "CLEAR ALL", target: "Target", arrow: "Arrow", undo: "UNDO (LAST ARROW)", list: "Archers:", waiting: "waiting...", current: "CURRENT SCORE:", archersNone: "none", alertMiss: "Missing data!", confirmExit: "Confirm exit?", confirmNew: "New race?", confirmClear: "Clear all history?", confirmDel: "Delete this record?", shareOne: "SHARE DETAILED RESULT" }
+            cs: { 
+                title: "3D Archery Score", inT: "Počet terčů", inA: "Šípů na terč", inN: "Jméno střelce", add: "PŘIDAT STŘELCE", start: "START ZÁVODU", hist: "HISTORIE", glob: "Vystřeleno:", arrows: "šípů", races: "Závodů:", exit: "UKONČIT ZÁVOD", fin: "🏆 VÝSLEDKY", share: "SDÍLET CELKOVÉ VÝSLEDKY", new: "NOVÝ ZÁVOD", hTitle: "Historie (1. střelec)", lp: "(podržte položku pro smazání)", home: "ZPĚT NA ÚVOD", clear: "SMAZAT VŠE", target: "Terč", arrow: "Šíp", undo: "ZPĚT (POSLEDNÍ ŠÍP)", list: "Střelci:", waiting: "čeká...", current: "PRŮBĚŽNĚ:", archersNone: "žádní", alertMiss: "Chybí údaje!", confirmExit: "Opravdu ukončit?", confirmNew: "Nový závod?", confirmClear: "Smazat všechnu historii?", confirmDel: "Smazat tento záznam z historie?", shareOne: "SDÍLET DETAILNÍ VÝSLEDEK", coffee: "☕ Pozvat autora na kafe",
+                helpT: "Návod k použití",
+                helpB: "<li><b>Instalace:</b> Na iOS (Sdílet -> Zobrazit další -> Přidat na plochu), na Androidu (Menu -> Přidat na domovskou obrazovku).</li><li>Pro první spuštění buďte <b>online</b>, poté funguje i offline.</li><li>Zadejte počet terčů, šípů a střelce.</li><li><b>Pozor:</b> Historie se ukládá jen pro <b>1. zadaného střelce</b>, proto zadejte vždy sebe jako prvního.</li><li>Během závodu tlačítko <b>ZPĚT</b> vrátí špatně zadanou hodnotu.</li><li>Závod se ukončí a vyhodnotí automaticky. Výsledky lze sdílet.</li><li>Historie se ukládá lokálně. <b>Smazáním ikony z plochy o ni přijdete.</b></li><li>Dlouhým podržením v historii smažete záznam.</li><li>Aplikace obsahuje globální počítadlo šípů.</li><li>Jestli chceš, můžeš podpořit autora drobnou částkou <b>overlayfitcam@gmail.com</b></li>"
+            },
+            en: { 
+                title: "3D Archery Score", inT: "Targets", inA: "Arrows per target", inN: "Archer name", add: "ADD ARCHER", start: "START RACE", hist: "HISTORY", glob: "Total arrows:", arrows: "arrows", races: "Races:", exit: "EXIT RACE", fin: "🏆 RESULTS", share: "SHARE RESULTS", new: "NEW RACE", hTitle: "History (1st archer)", lp: "(long press to delete)", home: "HOME", clear: "CLEAR ALL", target: "Target", arrow: "Arrow", undo: "UNDO (LAST ARROW)", list: "Archers:", waiting: "waiting...", current: "CURRENT SCORE:", archersNone: "none", alertMiss: "Missing data!", confirmExit: "Confirm exit?", confirmNew: "New race?", confirmClear: "Clear all history?", confirmDel: "Delete this record?", shareOne: "SHARE DETAILED RESULT", coffee: "☕ Buy me a coffee",
+                helpT: "Instructions",
+                helpB: "<li><b>Installation:</b> On iOS (Share -> show more Add -> to Home Screen), on Android (Menu -> Add to Home screen).</li><li>Must be <b>online</b> for the first launch, then works offline.</li><li>Enter target count, arrows, and archers.</li><li><b>Note:</b> History is only saved for the <b>1st archer</b>, so always list yourself first.</li><li>The <b>UNDO</b> button corrects the last entry during the race.</li><li>The race ends and evaluates automatically. Results can be shared.</li><li>History is stored locally. <b>Deleting the app icon will erase it.</b></li><li>Long press a history record to delete it.</li><li>Includes a global arrow counter.</li><li>If you want, you can support the author with a small donation <b>overlayfitcam@gmail.com</b></li>"
+            }
         };
 
         let L = localStorage.getItem('arch_lang') || (navigator.language.startsWith('en') ? 'en' : 'cs');
         function changeLang(code) { localStorage.setItem('arch_lang', code); location.reload(); }
+
+        /* --- NOVÉ: Funkce pro Help --- */
+        function toggleHelp(show) {
+            document.getElementById('helpModal').style.display = show ? 'flex' : 'none';
+        }
 
         function applyTexts() {
             const T = texts[L];
@@ -169,6 +227,10 @@
             document.getElementById('t-homeBtn').innerText = T.home;
             document.getElementById('t-clearBtn').innerText = T.clear;
             document.getElementById('listDisplay').innerHTML = T.list + " " + T.archersNone;
+            document.getElementById('t-coffeeBtn').innerText = T.coffee;
+            // Lokalizace nápovědy
+            document.getElementById('t-helpTitle').innerText = T.helpT;
+            document.getElementById('t-helpBody').innerHTML = T.helpB;
         }
 
         async function syncFirebase(arrows, raceVal = 0) {
@@ -211,6 +273,8 @@
         function showScreen(id) {
             document.querySelectorAll('body > div').forEach(div => div.style.display = 'none');
             document.getElementById(id).style.display = 'block';
+            // Ponechat help tlačítko vždy viditelné
+            document.querySelector('.help-trigger').style.display = 'flex';
         }
 
         function addArcher() {
@@ -341,7 +405,7 @@
         function shareFinal() { 
             let now = new Date();
             let dateStr = now.toLocaleDateString('cs-CZ') + " " + now.toLocaleTimeString('cs-CZ', {hour: '2-digit', minute:'2-digit'});
-            let text = `🎯 ARCHERY SCORE\n📅 ${dateStr}\n━━━━━━━━━━━━━━\n`;
+            let text = `🎯 3D ARCHERY SCORE\n📅 ${dateStr}\n━━━━━━━━━━━━━━\n`;
             let sorted = [...archers].sort((a,b) => scores[b] - scores[a]);
             text += sorted.map((n, i) => {
                 let h = hits[n];
@@ -401,7 +465,7 @@
             let history = JSON.parse(localStorage.getItem('archery_history') || "[]");
             let r = history.find(i => i.id === id);
             if (!r) return;
-            let text = `🎯 ARCHERY SCORE\n📅 ${r.date}\n━━━━━━━━━━━━\nTotal: ${r.pts} b. (Ø ${r.avg})\n\n🏹 TARGETS:\n`;
+            let text = `🎯 3D ARCHERY SCORE\n📅 ${r.date}\n━━━━━━━━━━━━\nTotal: ${r.pts} b. (Ø ${r.avg})\n\n🏹 TARGETS:\n`;
             r.targets.forEach((t, i) => { if(t.length > 0) text += `T${(i+1).toString().padStart(2,'0')}: (${t.join(",")}) = ${t.reduce((a,b)=>a+b,0)}b\n`; });
             text += "\nby LiborPribor";
             if (navigator.share) navigator.share({title: 'Archery Detail', text: text}); else alert(text);
