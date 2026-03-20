@@ -84,7 +84,13 @@
         }
         .coffee-btn:active { transform: scale(0.95); }
 
-        /* --- NOVÉ: Styl pro Help tlačítko a okno --- */
+        .share-app-btn {
+            background: #fff; color: #2196F3; border: 2px solid #2196F3;
+            padding: 10px 18px; border-radius: 12px; display: inline-flex;
+            align-items: center; justify-content: center; font-weight: bold;
+            font-size: 0.85em; margin: 10px 0; width: auto;
+        }
+
         .help-trigger {
             position: fixed; bottom: 20px; right: 20px; width: 44px; height: 44px;
             background: white; border: 2px solid var(--primary); color: var(--primary);
@@ -113,8 +119,7 @@
     <div id="helpModal" onclick="toggleHelp(false)">
         <div class="help-content" onclick="event.stopPropagation()">
             <h3 id="t-helpTitle">Nápověda</h3>
-            <ul id="t-helpBody">
-                </ul>
+            <ul id="t-helpBody"></ul>
             <button class="green" onclick="toggleHelp(false)">OK</button>
         </div>
     </div>
@@ -141,6 +146,8 @@
             <a href="https://revolut.me/liborpribor/" target="_blank" class="coffee-btn">
                 <span id="t-coffeeBtn">☕ Pozvat autora na kafe</span>
             </a>
+            <br>
+            <button id="t-shareAppBtn1" class="share-app-btn" onclick="shareAppLink()">🔗 SDÍLET APLIKACI</button>
 
             <div class="lang-switch">
                 <span class="lang-btn" onclick="changeLang('cs')">CZ</span> | 
@@ -170,6 +177,7 @@
         <div id="finalTable" class="card" style="text-align: left;"></div>
         <button id="t-shareFinalBtn" class="green" onclick="shareFinal()">SDÍLET CELKOVÉ VÝSLEDKY</button>
         <button id="t-newBtn" style="background: #222; color:white;" onclick="confirmRestart()">NOVÝ ZÁVOD</button>
+        <button id="t-shareAppBtn2" class="share-app-btn" onclick="shareAppLink()" style="width: 100%;">🔗 SDÍLET APLIKACI</button>
     </div>
 
     <div id="sHistory">
@@ -186,12 +194,12 @@
 
         const texts = {
             cs: { 
-                title: "3D Archery Score", inT: "Počet terčů", inA: "Šípů na terč", inN: "Jméno střelce", add: "PŘIDAT STŘELCE", start: "START ZÁVODU", hist: "HISTORIE", glob: "Vystřeleno:", arrows: "šípů", races: "Závodů:", exit: "UKONČIT ZÁVOD", fin: "🏆 VÝSLEDKY", share: "SDÍLET CELKOVÉ VÝSLEDKY", new: "NOVÝ ZÁVOD", hTitle: "Historie (1. střelec)", lp: "(podržte položku pro smazání)", home: "ZPĚT NA ÚVOD", clear: "SMAZAT VŠE", target: "Terč", arrow: "Šíp", undo: "ZPĚT (POSLEDNÍ ŠÍP)", list: "Střelci:", waiting: "čeká...", current: "PRŮBĚŽNĚ:", archersNone: "žádní", alertMiss: "Chybí údaje!", confirmExit: "Opravdu ukončit?", confirmNew: "Nový závod?", confirmClear: "Smazat všechnu historii?", confirmDel: "Smazat tento záznam z historie?", shareOne: "SDÍLET DETAILNÍ VÝSLEDEK", coffee: "☕ Pozvat autora na kafe",
+                title: "3D Archery Score", inT: "Počet terčů", inA: "Šípů na terč", inN: "Jméno střelce", add: "PŘIDAT STŘELCE", start: "START ZÁVODU", hist: "HISTORIE", glob: "Vystřeleno:", arrows: "šípů", races: "Závodů:", exit: "UKONČIT ZÁVOD", fin: "🏆 VÝSLEDKY", share: "SDÍLET CELKOVÉ VÝSLEDKY", new: "NOVÝ ZÁVOD", hTitle: "Historie (1. střelec)", lp: "(podržte položku pro smazání)", home: "ZPĚT NA ÚVOD", clear: "SMAZAT VŠE", target: "Terč", arrow: "Šíp", undo: "ZPĚT (POSLEDNÍ ŠÍP)", list: "Střelci:", waiting: "čeká...", current: "PRŮBĚŽNĚ:", archersNone: "žádní", alertMiss: "Chybí údaje!", confirmExit: "Opravdu ukončit?", confirmNew: "Nový závod?", confirmClear: "Smazat všechnu historii?", confirmDel: "Smazat tento záznam z historie?", shareOne: "SDÍLET DETAILNÍ VÝSLEDEK", coffee: "☕ Pozvat autora na kafe", shareApp: "🔗 SDÍLET APLIKACI",
                 helpT: "Návod k použití",
                 helpB: "<li><b>Instalace:</b> Na iOS (Sdílet -> Zobrazit další -> Přidat na plochu), na Androidu (Menu -> Přidat na domovskou obrazovku).</li><li>Pro první spuštění buďte <b>online</b>, poté funguje i offline.</li><li>Zadejte počet terčů, šípů a střelce.</li><li><b>Pozor:</b> Historie se ukládá jen pro <b>1. zadaného střelce</b>, proto zadejte vždy sebe jako prvního.</li><li>Během závodu tlačítko <b>ZPĚT</b> vrátí špatně zadanou hodnotu.</li><li>Závod se ukončí a vyhodnotí automaticky. Výsledky lze sdílet.</li><li>Historie se ukládá lokálně. <b>Smazáním ikony z plochy o ni přijdete.</b></li><li>Dlouhým podržením v historii smažete záznam.</li><li>Aplikace obsahuje globální počítadlo šípů.</li><li>Jestli chceš, můžeš podpořit autora drobnou částkou <b>overlayfitcam@gmail.com</b></li>"
             },
             en: { 
-                title: "3D Archery Score", inT: "Targets", inA: "Arrows per target", inN: "Archer name", add: "ADD ARCHER", start: "START RACE", hist: "HISTORY", glob: "Total arrows:", arrows: "arrows", races: "Races:", exit: "EXIT RACE", fin: "🏆 RESULTS", share: "SHARE RESULTS", new: "NEW RACE", hTitle: "History (1st archer)", lp: "(long press to delete)", home: "HOME", clear: "CLEAR ALL", target: "Target", arrow: "Arrow", undo: "UNDO (LAST ARROW)", list: "Archers:", waiting: "waiting...", current: "CURRENT SCORE:", archersNone: "none", alertMiss: "Missing data!", confirmExit: "Confirm exit?", confirmNew: "New race?", confirmClear: "Clear all history?", confirmDel: "Delete this record?", shareOne: "SHARE DETAILED RESULT", coffee: "☕ Buy me a coffee",
+                title: "3D Archery Score", inT: "Targets", inA: "Arrows per target", inN: "Archer name", add: "ADD ARCHER", start: "START RACE", hist: "HISTORY", glob: "Total arrows:", arrows: "arrows", races: "Races:", exit: "EXIT RACE", fin: "🏆 RESULTS", share: "SHARE RESULTS", new: "NEW RACE", hTitle: "History (1st archer)", lp: "(long press to delete)", home: "HOME", clear: "CLEAR ALL", target: "Target", arrow: "Arrow", undo: "UNDO (LAST ARROW)", list: "Archers:", waiting: "waiting...", current: "CURRENT SCORE:", archersNone: "none", alertMiss: "Missing data!", confirmExit: "Confirm exit?", confirmNew: "New race?", confirmClear: "Clear all history?", confirmDel: "Delete this record?", shareOne: "SHARE DETAILED RESULT", coffee: "☕ Buy me a coffee", shareApp: "🔗 SHARE APP",
                 helpT: "Instructions",
                 helpB: "<li><b>Installation:</b> On iOS (Share -> show more Add -> to Home Screen), on Android (Menu -> Add to Home screen).</li><li>Must be <b>online</b> for the first launch, then works offline.</li><li>Enter target count, arrows, and archers.</li><li><b>Note:</b> History is only saved for the <b>1st archer</b>, so always list yourself first.</li><li>The <b>UNDO</b> button corrects the last entry during the race.</li><li>The race ends and evaluates automatically. Results can be shared.</li><li>History is stored locally. <b>Deleting the app icon will erase it.</b></li><li>Long press a history record to delete it.</li><li>Includes a global arrow counter.</li><li>If you want, you can support the author with a small donation <b>overlayfitcam@gmail.com</b></li>"
             }
@@ -200,7 +208,6 @@
         let L = localStorage.getItem('arch_lang') || (navigator.language.startsWith('en') ? 'en' : 'cs');
         function changeLang(code) { localStorage.setItem('arch_lang', code); location.reload(); }
 
-        /* --- NOVÉ: Funkce pro Help --- */
         function toggleHelp(show) {
             document.getElementById('helpModal').style.display = show ? 'flex' : 'none';
         }
@@ -228,7 +235,8 @@
             document.getElementById('t-clearBtn').innerText = T.clear;
             document.getElementById('listDisplay').innerHTML = T.list + " " + T.archersNone;
             document.getElementById('t-coffeeBtn').innerText = T.coffee;
-            // Lokalizace nápovědy
+            document.getElementById('t-shareAppBtn1').innerText = T.shareApp;
+            document.getElementById('t-shareAppBtn2').innerText = T.shareApp;
             document.getElementById('t-helpTitle').innerText = T.helpT;
             document.getElementById('t-helpBody').innerHTML = T.helpB;
         }
@@ -273,7 +281,6 @@
         function showScreen(id) {
             document.querySelectorAll('body > div').forEach(div => div.style.display = 'none');
             document.getElementById(id).style.display = 'block';
-            // Ponechat help tlačítko vždy viditelné
             document.querySelector('.help-trigger').style.display = 'flex';
         }
 
@@ -416,15 +423,34 @@
             if (navigator.share) navigator.share({ title: 'Results', text: text }); else alert(text);
         }
 
+        function shareAppLink() {
+            const url = window.location.href;
+            const text = L === 'cs' ? "Koukni na tuhle super apku na počítání 3D lukostřelby! 🏹" : "Check out this awesome 3D Archery scoring app! 🏹";
+            if (navigator.share) {
+                navigator.share({ title: '3D Archery Score', text: text, url: url });
+            } else {
+                alert(text + "\n" + url);
+            }
+        }
+
         function renderHistory() {
             let h = JSON.parse(localStorage.getItem('archery_history') || "[]");
             let displayData = [...h].reverse();
-            let gHtml = ""; let maxPts = h.length > 0 ? Math.max(...h.map(r => r.pts)) : 0;
+            let gHtml = ""; 
+            let maxPts = h.length > 0 ? Math.max(...h.map(r => r.pts)) : 0;
+            
             displayData.slice(0, 20).forEach((r, i) => {
                 let barH = maxPts > 0 ? (r.pts / maxPts) * 100 : 0;
-                gHtml += `<div class="bar-wrapper">${r.pts === maxPts && maxPts > 0 ? '<span class="crown">👑</span>' : ''}<span class="bar-pts">${r.pts}</span><div class="bar ${i===0?'latest':''}" style="height:${barH}px"></div><span class="bar-label">${r.date.split(' ')[0]}</span></div>`;
+                let hasCrown = (r.pts === maxPts && maxPts > 0) ? '<span class="crown">👑</span>' : '';
+                gHtml += `<div class="bar-wrapper">
+                            ${hasCrown}
+                            <span class="bar-pts">${r.pts}</span>
+                            <div class="bar ${i===0?'latest':''}" style="height:${barH}px"></div>
+                            <span class="bar-label">${r.date.split(' ')[0]}</span>
+                          </div>`;
             });
             document.getElementById('graphContainer').innerHTML = gHtml;
+            
             let lHtml = "";
             displayData.forEach(r => {
                 let tRows = "";
