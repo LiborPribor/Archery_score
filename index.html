@@ -59,7 +59,7 @@
         .bar-label { font-size: 0.7em; color: #666; margin-top: 4px; }
         .bar-pts { font-size: 0.75em; font-weight: bold; margin-bottom: 2px; }
 
-        #s2, #sHistory, #sFinish { display: none; }
+        #s2, #sHistory, #sFinish, #sSettings { display: none; }
         
         .current-target-arrows { font-size: 0.85em; color: #2196F3; font-weight: bold; background: #e3f2fd; padding: 2px 6px; border-radius: 4px; }
         .res-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
@@ -120,7 +120,7 @@
         <div class="help-content" onclick="event.stopPropagation()">
             <h3 id="t-helpTitle">Nápověda</h3>
             <ul id="t-helpBody"></ul>
-            <button class="green" onclick="toggleHelp(false)">OK</button>
+            <button id="t-helpOk" class="green" onclick="toggleHelp(false)">OK</button>
         </div>
     </div>
 
@@ -135,6 +135,7 @@
             <input type="text" id="inN" placeholder="Jméno střelce">
             <button id="t-addBtn" class="green" type="button" onclick="addArcher()">PŘIDAT STŘELCE</button>
             <div id="listDisplay" style="margin: 10px 0; font-weight: bold;">Střelci: žádní</div>
+            <button id="t-custBtn" style="background: #e3f2fd; color: #1976D2; font-size: 0.9em;" onclick="showSettings()"></button>
         </div>
         <button id="t-startBtn" class="green" style="background: #222;" type="button" onclick="startRace()">START ZÁVODU</button>
         <button id="t-histBtn" style="background: #fff; color: #333; margin-top:20px; border: 1px solid #ccc;" type="button" onclick="showHistory()">HISTORIE</button>
@@ -157,16 +158,19 @@
         </div>
     </div>
 
+    <div id="sSettings">
+        <h3 id="t-custTitle">Nastavení bodování</h3>
+        <div class="card">
+            <p id="t-custDesc" style="font-size: 0.8em; color: #666;">Zadejte body oddělené čárkou (např: 11, 10, 8, 5, 0)</p>
+            <input type="text" id="inPoints" placeholder="11, 10, 8, 5, 0">
+            <button id="t-setSaveBtn" class="green" onclick="saveSettings()">ULOŽIT A ZPĚT</button>
+        </div>
+    </div>
+
     <div id="s2">
         <div id="info" style="font-weight: bold;"></div>
         <h1 id="who" style="font-size: 2.5em; margin: 10px 0; text-transform: uppercase; letter-spacing: 2px;"></h1>
-        <div class="grid card">
-            <button onclick="bod(11)" style="background:#004D40; color:white; height: 85px;">11</button>
-            <button onclick="bod(10)" style="background:#2E7D32; color:white; height: 85px;">10</button>
-            <button onclick="bod(8)" style="background:#FBC02D; color:black; height: 85px;">8</button>
-            <button onclick="bod(5)" style="background:#E64A19; color:white; height: 85px;">5</button>
-            <button style="grid-column: span 2; background:#212121; color:white; height: 75px;" onclick="bod(0)">0</button>
-        </div>
+        <div id="dynamicButtons" class="grid card"></div>
         <button id="btnUndo" style="background:#ffcc00; opacity:0.2" onclick="zpet()">ZPĚT (POSLEDNÍ ŠÍP)</button>
         <div id="res" class="card" style="text-align: left;"></div>
         <button id="t-exitBtn" style="margin-top: 20px; background:#888; color:white; font-size: 0.8em;" onclick="confirmExit()">UKONČIT ZÁVOD</button>
@@ -192,19 +196,20 @@
     <script>
         const DB_URL = "https://archeryscore-d138a-default-rtdb.europe-west1.firebasedatabase.app/.json";
 
-        const texts = {
-            cs: { 
-                title: "3D Archery Score", inT: "Počet terčů", inA: "Šípů na terč", inN: "Jméno střelce", add: "PŘIDAT STŘELCE", start: "START ZÁVODU", hist: "HISTORIE", glob: "Vystřeleno:", arrows: "šípů", races: "Závodů:", exit: "UKONČIT ZÁVOD", fin: "🏆 VÝSLEDKY", share: "SDÍLET CELKOVÉ VÝSLEDKY", new: "NOVÝ ZÁVOD", hTitle: "Historie (1. střelec)", lp: "(podržte položku pro smazání)", home: "ZPĚT NA ÚVOD", clear: "SMAZAT VŠE", target: "Terč", arrow: "Šíp", undo: "ZPĚT (POSLEDNÍ ŠÍP)", list: "Střelci:", waiting: "čeká...", current: "PRŮBĚŽNĚ:", archersNone: "žádní", alertMiss: "Chybí údaje!", confirmExit: "Opravdu ukončit?", confirmNew: "Nový závod?", confirmClear: "Smazat všechnu historii?", confirmDel: "Smazat tento záznam z historie?", shareOne: "SDÍLET DETAILNÍ VÝSLEDEK", coffee: "☕ Pozvat autora na kafe", shareApp: "🔗 SDÍLET APLIKACI",
-                helpT: "Návod k použití",
-                helpB: "<li><b>Instalace:</b> Na iOS (Sdílet -> Zobrazit další -> Přidat na plochu), na Androidu (Menu -> Přidat na domovskou obrazovku).</li><li>Pro první spuštění buďte <b>online</b>, poté funguje i offline.</li><li>Zadejte počet terčů, šípů a střelce.</li><li><b>Pozor:</b> Historie se ukládá jen pro <b>1. zadaného střelce</b>, proto zadejte vždy sebe jako prvního.</li><li>Během závodu tlačítko <b>ZPĚT</b> vrátí špatně zadanou hodnotu.</li><li>Závod se ukončí a vyhodnotí automaticky. Výsledky lze sdílet.</li><li>Historie se ukládá lokálně. <b>Smazáním ikony z plochy o ni přijdete.</b></li><li>Dlouhým podržením v historii smažete záznam.</li><li>Aplikace obsahuje globální počítadlo šípů.</li><li>Jestli chceš, můžeš podpořit autora drobnou částkou <b>overlayfitcam@gmail.com</b></li>"
-            },
-            en: { 
-                title: "3D Archery Score", inT: "Targets", inA: "Arrows per target", inN: "Archer name", add: "ADD ARCHER", start: "START RACE", hist: "HISTORY", glob: "Total arrows:", arrows: "arrows", races: "Races:", exit: "EXIT RACE", fin: "🏆 RESULTS", share: "SHARE RESULTS", new: "NEW RACE", hTitle: "History (1st archer)", lp: "(long press to delete)", home: "HOME", clear: "CLEAR ALL", target: "Target", arrow: "Arrow", undo: "UNDO (LAST ARROW)", list: "Archers:", waiting: "waiting...", current: "CURRENT SCORE:", archersNone: "none", alertMiss: "Missing data!", confirmExit: "Confirm exit?", confirmNew: "New race?", confirmClear: "Clear all history?", confirmDel: "Delete this record?", shareOne: "SHARE DETAILED RESULT", coffee: "☕ Buy me a coffee", shareApp: "🔗 SHARE APP",
-                helpT: "Instructions",
-                helpB: "<li><b>Installation:</b> On iOS (Share -> show more Add -> to Home Screen), on Android (Menu -> Add to Home screen).</li><li>Must be <b>online</b> for the first launch, then works offline.</li><li>Enter target count, arrows, and archers.</li><li><b>Note:</b> History is only saved for the <b>1st archer</b>, so always list yourself first.</li><li>The <b>UNDO</b> button corrects the last entry during the race.</li><li>The race ends and evaluates automatically. Results can be shared.</li><li>History is stored locally. <b>Deleting the app icon will erase it.</b></li><li>Long press a history record to delete it.</li><li>Includes a global arrow counter.</li><li>If you want, you can support the author with a small donation <b>overlayfitcam@gmail.com</b></li>"
-            }
-        };
-
+       const texts = {
+    cs: { 
+        title: "3D Archery Score", inT: "Počet terčů", inA: "Šípů na terč", inN: "Jméno střelce", add: "PŘIDAT STŘELCE", start: "START ZÁVODU", hist: "HISTORIE", glob: "Vystřeleno:", arrows: "šípů", races: "Závodů:", exit: "UKONČIT ZÁVOD", fin: "🏆 VÝSLEDKY", share: "SDÍLET CELKOVÉ VÝSLEDKY", new: "NOVÝ ZÁVOD", hTitle: "Historie (1. střelec)", lp: "(podržte položku pro smazání)", home: "ZPĚT NA ÚVOD", clear: "SMAZAT VŠE", target: "Terč", arrow: "Šíp", undo: "ZPĚT (POSLEDNÍ ŠÍP)", list: "Střelci:", waiting: "čeká...", current: "PRŮBĚŽNĚ:", archersNone: "žádní", alertMiss: "Chybí údaje!", confirmExit: "Opravdu ukončit?", confirmNew: "Nový závod?", confirmClear: "Smazat všechnu historii?", confirmDel: "Smazat tento záznam z historie?", shareOne: "SDÍLET DETAILNÍ VÝSLEDEK", coffee: "☕ Pozvat autora na kafe", shareApp: "🔗 SDÍLET APLIKACI",
+        helpT: "Návod k použití",
+        helpB: "<li><b>Instalace:</b> Na iOS (Sdílet -> Zobrazit další -> Přidat na plochu), na Androidu (Menu -> Přidat na domovskou obrazovku).</li><li>Pro první spuštění buďte <b>online</b>, poté funguje i offline.</li><li>Zadejte počet terčů, šípů a střelce.</li><li><b>Vlastní bodování:</b> V nastavení můžete definovat vlastní hodnoty zásahů.</li><li><b>Pozor:</b> Historie se ukládá jen pro <b>1. zadaného střelce</b>, proto zadejte vždy sebe jako prvního.</li><li>Během závodu tlačítko <b>ZPĚT</b> vrátí špatně zadanou hodnotu.</li><li>Závod se ukončí a vyhodnotí automaticky. Výsledky lze sdílet.</li><li>Historie se ukládá lokálně. <b>Smazáním ikony z plochy o ni přijdete.</b></li><li>Dlouhým podržením v historii smažete záznam.</li>",
+        custBtn: "⚙️ VLASTNÍ BODOVÁNÍ", custTitle: "Nastavení bodování", custDesc: "Zadejte body oddělené čárkou (např: 11, 10, 8, 5, 0)", setBtn: "ULOŽIT A ZPĚT"
+    },
+    en: { 
+        title: "3D Archery Score", inT: "Targets", inA: "Arrows per target", inN: "Archer name", add: "ADD ARCHER", start: "START RACE", hist: "HISTORY", glob: "Total arrows:", arrows: "arrows", races: "Races:", exit: "EXIT RACE", fin: "🏆 RESULTS", share: "SHARE RESULTS", new: "NEW RACE", hTitle: "History (1st archer)", lp: "(long press to delete)", home: "HOME", clear: "CLEAR ALL", target: "Target", arrow: "Arrow", undo: "UNDO (LAST ARROW)", list: "Archers:", waiting: "waiting...", current: "CURRENT SCORE:", archersNone: "none", alertMiss: "Missing data!", confirmExit: "Confirm exit?", confirmNew: "New race?", confirmClear: "Clear all history?", confirmDel: "Delete this record?", shareOne: "SHARE DETAILED RESULT", coffee: "☕ Buy me a coffee", shareApp: "🔗 SHARE APP",
+        helpT: "Instructions",
+        helpB: "<li><b>Installation:</b> On iOS (Share -> Add to Home Screen), on Android (Menu -> Add to Home screen).</li><li>For the first launch, stay <b>online</b>, then it works offline.</li><li>Enter the number of targets, arrows, and archers.</li><li><b>Custom Scoring:</b> You can define your own scoring values in settings.</li><li><b>Note:</b> History is only saved for the <b>1st entered archer</b>, so always enter yourself first.</li><li>During the race, the <b>UNDO</b> button can revert a wrongly entered value.</li><li>The race ends and evaluates automatically. Results can be shared.</li><li>History is stored locally. <b>By deleting the app icon, you will lose your history.</b></li><li>Long press an item in history to delete the record.</li>",
+        custBtn: "⚙️ CUSTOM SCORING", custTitle: "Scoring Settings", custDesc: "Enter points separated by comma (e.g. 11, 10, 8, 5, 0)", setBtn: "SAVE AND BACK"
+    }
+};
         let L = localStorage.getItem('arch_lang') || (navigator.language.startsWith('en') ? 'en' : 'cs');
         function changeLang(code) { localStorage.setItem('arch_lang', code); location.reload(); }
 
@@ -239,6 +244,13 @@
             document.getElementById('t-shareAppBtn2').innerText = T.shareApp;
             document.getElementById('t-helpTitle').innerText = T.helpT;
             document.getElementById('t-helpBody').innerHTML = T.helpB;
+            
+            // PŘEKLAD NASTAVENÍ A TLAČÍTKA
+            document.getElementById('t-custBtn').innerText = T.custBtn;
+            document.getElementById('t-custTitle').innerText = T.custTitle;
+            document.getElementById('t-custDesc').innerText = T.custDesc;
+            document.getElementById('t-setSaveBtn').innerText = T.setBtn;
+            document.getElementById('inPoints').placeholder = T.inT === "Targets" ? "11, 10, 8, 5, 0" : "11, 10, 8, 5, 0";
         }
 
         async function syncFirebase(arrows, raceVal = 0) {
@@ -251,8 +263,7 @@
                 let curA = (data && data.global_arrows) ? data.global_arrows : 0;
                 let curR = (data && data.global_races) ? data.global_races : 0;
                 if (arrows !== 0 || raceVal !== 0) {
-                    curA += arrows;
-                    curR += raceVal;
+                    curA += arrows; curR += raceVal;
                     fetch(DB_URL, { 
                         method: 'PATCH', 
                         body: JSON.stringify({ global_arrows: curA, global_races: curR }),
@@ -270,16 +281,32 @@
         let archers = []; let scores = {}; let hits = {}; let totalArrowsShot = {};
         let targetLog = {}; let tc, ac, ct = 1, ci = 0, as = 0, canUndo = false;
         let pressTimer;
+        let customPoints = [11, 10, 8, 5, 0];
 
         window.onload = function() {
+            let savedPoints = localStorage.getItem('archery_points');
+            if (savedPoints) {
+                customPoints = JSON.parse(savedPoints);
+                document.getElementById('inPoints').value = customPoints.join(', ');
+            }
             applyTexts();
             syncFirebase(0, 0);
         };
 
+        function showSettings() { showScreen('sSettings'); }
+        function saveSettings() {
+            let val = document.getElementById('inPoints').value;
+            if (val) {
+                customPoints = val.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+                localStorage.setItem('archery_points', JSON.stringify(customPoints));
+            }
+            showScreen('s1');
+        }
+
         const targetColors = ["#FFEBEE", "#E3F2FD", "#F1F8E9", "#FFF3E0", "#F3E5F5", "#E0F2F1", "#FFFDE7", "#F5F5F5"];
 
         function showScreen(id) {
-            document.querySelectorAll('body > div').forEach(div => div.style.display = 'none');
+            document.querySelectorAll('body > div').forEach(div => { if(div.id) div.style.display = 'none'; });
             document.getElementById(id).style.display = 'block';
             document.querySelector('.help-trigger').style.display = 'flex';
         }
@@ -289,10 +316,27 @@
             let name = input.value.trim();
             if (name) {
                 archers.push(name); scores[name] = 0; totalArrowsShot[name] = 0;
-                hits[name] = {11:0, 10:0, 8:0, 5:0, 0:0}; targetLog[name] = [];
+                hits[name] = {};
+                customPoints.forEach(p => hits[name][p] = 0);
+                targetLog[name] = [];
                 document.getElementById('listDisplay').innerHTML = texts[L].list + " " + archers.join(", ");
                 input.value = "";
             }
+        }
+
+        function generateButtons() {
+            let html = "";
+            customPoints.forEach((p, idx) => {
+                let color = "#2E7D32";
+                if (p >= 11) color = "#004D40";
+                if (p === 8) color = "#FBC02D";
+                if (p === 5) color = "#E64A19";
+                if (p === 0) color = "#212121";
+                let textColor = (p === 8) ? "black" : "white";
+                let span = (p === 0) ? "grid-column: span 2;" : "";
+                html += `<button onclick="bod(${p})" style="background:${color}; color:${textColor}; height: 85px; ${span}">${p}</button>`;
+            });
+            document.getElementById('dynamicButtons').innerHTML = html;
         }
 
         function startRace() {
@@ -300,6 +344,7 @@
             ac = parseInt(document.getElementById('inA').value);
             if (archers.length > 0 && tc > 0 && ac > 0) {
                 ct = 1; ci = 0; as = 0;
+                generateButtons();
                 archers.forEach(n => { targetLog[n] = Array.from({length: tc}, () => []); });
                 showScreen('s2');
                 updateUI();
@@ -311,7 +356,7 @@
             let name = archers[ci];
             targetLog[name][ct-1].push(p);
             scores[name] += p; 
-            hits[name][p]++; 
+            hits[name][p] = (hits[name][p] || 0) + 1; 
             totalArrowsShot[name]++;
             syncFirebase(1, 0);
             document.body.style.transition = "none";
@@ -387,9 +432,10 @@
                 let medal = i===0?"🥇":i===1?"🥈":i===2?"🥉":"•";
                 let h = hits[n];
                 let avg = (scores[n] / totalArrowsShot[n]).toFixed(2);
+                let hitSummary = customPoints.map(p => `${p}x<b>${h[p]||0}</b>`).join(" | ");
                 txt += `<div style="margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
                             ${medal} <b>${n}</b>: <span class='highlight'>${scores[n]} b.</span> (Ø ${avg})
-                            <div class="hits-summary">🎯 11x<b>${h[11]}</b> | 10x<b>${h[10]}</b> | 8x<b>${h[8]}</b> | 5x<b>${h[5]}</b> | 0x<b>${h[0]}</b></div>
+                            <div class="hits-summary">🎯 ${hitSummary}</div>
                         </div>`;
             });
             document.getElementById('finalTable').innerHTML = txt;
@@ -417,7 +463,8 @@
             text += sorted.map((n, i) => {
                 let h = hits[n];
                 let avg = (scores[n] / totalArrowsShot[n]).toFixed(2);
-                return `${i+1}. ${n}: ${scores[n]} b. (Ø ${avg})\n   [11:${h[11]}, 10:${h[10]}, 8:${h[8]}, 5:${h[5]}, 0:${h[0]}]`;
+                let hitsStr = customPoints.map(p => `${p}:${h[p]||0}`).join(", ");
+                return `${i+1}. ${n}: ${scores[n]} b. (Ø ${avg})\n   [${hitsStr}]`;
             }).join("\n\n");
             text += "\n\nby LiborPribor";
             if (navigator.share) navigator.share({ title: 'Results', text: text }); else alert(text);
@@ -426,11 +473,7 @@
         function shareAppLink() {
             const url = window.location.href;
             const text = L === 'cs' ? "Koukni na tuhle super apku na počítání 3D lukostřelby! 🏹" : "Check out this awesome 3D Archery scoring app! 🏹";
-            if (navigator.share) {
-                navigator.share({ title: '3D Archery Score', text: text, url: url });
-            } else {
-                alert(text + "\n" + url);
-            }
+            if (navigator.share) navigator.share({ title: '3D Archery Score', text: text, url: url }); else alert(text + "\n" + url);
         }
 
         function renderHistory() {
@@ -438,7 +481,6 @@
             let displayData = [...h].reverse();
             let gHtml = ""; 
             let maxPts = h.length > 0 ? Math.max(...h.map(r => r.pts)) : 0;
-            
             displayData.slice(0, 20).forEach((r, i) => {
                 let barH = maxPts > 0 ? (r.pts / maxPts) * 100 : 0;
                 let hasCrown = (r.pts === maxPts && maxPts > 0) ? '<span class="crown">👑</span>' : '';
@@ -450,7 +492,6 @@
                           </div>`;
             });
             document.getElementById('graphContainer').innerHTML = gHtml;
-            
             let lHtml = "";
             displayData.forEach(r => {
                 let tRows = "";
@@ -460,10 +501,7 @@
                         if(t.length > 0) tRows += `<div class="detail-row"><span>T${idx+1}</span><span>(${t.join(",")})</span><b>${tSum}b</b></div>`;
                     });
                 }
-                lHtml += `<div class="history-item" 
-                            onmousedown="startPress(${r.id})" onmouseup="endPress(${r.id})" 
-                            ontouchstart="startPress(${r.id})" ontouchend="endPress(${r.id})"
-                            onclick="toggleDetail(${r.id})">
+                lHtml += `<div class="history-item" onmousedown="startPress(${r.id})" onmouseup="endPress()" ontouchstart="startPress(${r.id})" ontouchend="endPress()" onclick="toggleDetail(${r.id})">
                     <div class="h-top"><div><b>${r.date}</b><br><small>Ø ${r.avg}</small></div><div class="h-score">${r.pts}</div></div>
                     <div class="h-details" id="det-${r.id}" onclick="event.stopPropagation()">${tRows}<button class="share-btn-small" onclick="shareOne(${r.id})">${texts[L].shareOne}</button></div>
                 </div>`;
@@ -471,11 +509,7 @@
             document.getElementById('historyList').innerHTML = lHtml || (L==='cs'?"Žádné záznamy.":"No records.");
         }
 
-        function startPress(id) {
-            pressTimer = setTimeout(() => {
-                if (confirm(texts[L].confirmDel)) { deleteHistoryItem(id); }
-            }, 600);
-        }
+        function startPress(id) { pressTimer = setTimeout(() => { if (confirm(texts[L].confirmDel)) { deleteHistoryItem(id); } }, 600); }
         function endPress() { clearTimeout(pressTimer); }
         function deleteHistoryItem(id) {
             let h = JSON.parse(localStorage.getItem('archery_history') || "[]");
@@ -497,20 +531,16 @@
             if (navigator.share) navigator.share({title: 'Archery Detail', text: text}); else alert(text);
         }
         function showHistory() { showScreen('sHistory'); renderHistory(); }
+        function confirmExit() { if (confirm(texts[L].confirmExit)) goHome(); }
+        function confirmRestart() { if (confirm(texts[L].confirmNew)) goHome(); }
+        function clearAllHistory() { if (confirm(texts[L].confirmClear)) { localStorage.removeItem('archery_history'); renderHistory(); } }
         
         function goHome() { 
             archers = []; scores = {}; hits = {}; totalArrowsShot = {}; targetLog = {};
             ct = 1; ci = 0; as = 0; canUndo = false;
-            document.getElementById('listDisplay').innerHTML = texts[L].list + " " + texts[L].archersNone;
-            document.getElementById('inN').value = "";
             document.body.style.backgroundColor = "#f4f4f9";
-            showScreen('s1'); 
-            syncFirebase(0, 0);
+            showScreen('s1');
         }
-        
-        function confirmExit() { if(confirm(texts[L].confirmExit)) goHome(); }
-        function confirmRestart() { if(confirm(texts[L].confirmNew)) goHome(); }
-        function clearAllHistory() { if(confirm(texts[L].confirmClear)) { localStorage.removeItem('archery_history'); renderHistory(); } }
     </script>
 </body>
 </html>
