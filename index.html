@@ -152,7 +152,8 @@
 
             <div class="lang-switch">
                 <span class="lang-btn" onclick="changeLang('cs')">CZ</span> | 
-                <span class="lang-btn" onclick="changeLang('en')">EN</span>
+                <span class="lang-btn" onclick="changeLang('en')">EN</span> |
+                <span class="lang-btn" onclick="changeLang('no')">NO</span>
             </div>
             <div style="font-size: 0.7em; color: #aaa; margin-top: 10px;">by LiborPribor</div>
         </div>
@@ -196,21 +197,28 @@
     <script>
         const DB_URL = "https://archeryscore-d138a-default-rtdb.europe-west1.firebasedatabase.app/.json";
 
-       const texts = {
-    cs: { 
-        title: "3D Archery Score", inT: "Počet terčů", inA: "Šípů na terč", inN: "Jméno střelce", add: "PŘIDAT STŘELCE", start: "START ZÁVODU", hist: "HISTORIE", glob: "Vystřeleno:", arrows: "šípů", races: "Závodů:", exit: "UKONČIT ZÁVOD", fin: "🏆 VÝSLEDKY", share: "SDÍLET CELKOVÉ VÝSLEDKY", new: "NOVÝ ZÁVOD", hTitle: "Historie (1. střelec)", lp: "(podržte položku pro smazání)", home: "ZPĚT NA ÚVOD", clear: "SMAZAT VŠE", target: "Terč", arrow: "Šíp", undo: "ZPĚT (POSLEDNÍ ŠÍP)", list: "Střelci:", waiting: "čeká...", current: "PRŮBĚŽNĚ:", archersNone: "žádní", alertMiss: "Chybí údaje!", confirmExit: "Opravdu ukončit?", confirmNew: "Nový závod?", confirmClear: "Smazat všechnu historii?", confirmDel: "Smazat tento záznam z historie?", shareOne: "SDÍLET DETAILNÍ VÝSLEDEK", coffee: "☕ Pozvat autora na kafe", shareApp: "🔗 SDÍLET APLIKACI",
-        helpT: "Návod k použití",
-        helpB: "<li><b>Instalace:</b> Na iOS (Sdílet -> Zobrazit další -> Přidat na plochu), na Androidu (Menu -> Přidat na domovskou obrazovku).</li><li>Pro první spuštění buďte <b>online</b>, poté funguje i offline.</li><li>Zadejte počet terčů, šípů a střelce.</li><li><b>Vlastní bodování:</b> V nastavení můžete definovat vlastní hodnoty zásahů.</li><li><b>Pozor:</b> Historie se ukládá jen pro <b>1. zadaného střelce</b>, proto zadejte vždy sebe jako prvního.</li><li>Během závodu tlačítko <b>ZPĚT</b> vrátí špatně zadanou hodnotu.</li><li>Závod se ukončí a vyhodnotí automaticky. Výsledky lze sdílet.</li><li>Historie se ukládá lokálně. <b>Smazáním ikony z plochy o ni přijdete.</b></li><li>Dlouhým podržením v historii smažete záznam.</li>",
-        custBtn: "⚙️ VLASTNÍ BODOVÁNÍ", custTitle: "Nastavení bodování", custDesc: "Zadejte body oddělené čárkou (např: 11, 10, 8, 5, 0)", setBtn: "ULOŽIT A ZPĚT"
-    },
-    en: { 
-        title: "3D Archery Score", inT: "Targets", inA: "Arrows per target", inN: "Archer name", add: "ADD ARCHER", start: "START RACE", hist: "HISTORY", glob: "Total arrows:", arrows: "arrows", races: "Races:", exit: "EXIT RACE", fin: "🏆 RESULTS", share: "SHARE RESULTS", new: "NEW RACE", hTitle: "History (1st archer)", lp: "(long press to delete)", home: "HOME", clear: "CLEAR ALL", target: "Target", arrow: "Arrow", undo: "UNDO (LAST ARROW)", list: "Archers:", waiting: "waiting...", current: "CURRENT SCORE:", archersNone: "none", alertMiss: "Missing data!", confirmExit: "Confirm exit?", confirmNew: "New race?", confirmClear: "Clear all history?", confirmDel: "Delete this record?", shareOne: "SHARE DETAILED RESULT", coffee: "☕ Buy me a coffee", shareApp: "🔗 SHARE APP",
-        helpT: "Instructions",
-        helpB: "<li><b>Installation:</b> On iOS (Share -> Add to Home Screen), on Android (Menu -> Add to Home screen).</li><li>For the first launch, stay <b>online</b>, then it works offline.</li><li>Enter the number of targets, arrows, and archers.</li><li><b>Custom Scoring:</b> You can define your own scoring values in settings.</li><li><b>Note:</b> History is only saved for the <b>1st entered archer</b>, so always enter yourself first.</li><li>During the race, the <b>UNDO</b> button can revert a wrongly entered value.</li><li>The race ends and evaluates automatically. Results can be shared.</li><li>History is stored locally. <b>By deleting the app icon, you will lose your history.</b></li><li>Long press an item in history to delete the record.</li>",
-        custBtn: "⚙️ CUSTOM SCORING", custTitle: "Scoring Settings", custDesc: "Enter points separated by comma (e.g. 11, 10, 8, 5, 0)", setBtn: "SAVE AND BACK"
-    }
-};
-        let L = localStorage.getItem('arch_lang') || (navigator.language.startsWith('en') ? 'en' : 'cs');
+        const texts = {
+            cs: { 
+                title: "3D Archery Score", inT: "Počet terčů", inA: "Šípů na terč", inN: "Jméno střelce", add: "PŘIDAT STŘELCE", start: "START ZÁVODU", hist: "HISTORIE", glob: "Vystřeleno:", arrows: "šípů", races: "Závodů:", exit: "UKONČIT ZÁVOD", fin: "🏆 VÝSLEDKY", share: "SDÍLET CELKOVÉ VÝSLEDKY", new: "NOVÝ ZÁVOD", hTitle: "Historie (1. střelec)", lp: "(podržte položku pro smazání)", home: "ZPĚT NA ÚVOD", clear: "SMAZAT VŠE", target: "Terč", arrow: "Šíp", undo: "ZPĚT (POSLEDNÍ ŠÍP)", list: "Střelci:", waiting: "čeká...", current: "PRŮBĚŽNĚ:", archersNone: "žádní", alertMiss: "Chybí údaje!", confirmExit: "Opravdu ukončit?", confirmNew: "Nový závod?", confirmClear: "Smazat všechnu historii?", confirmDel: "Smazat tento záznam z historie?", shareOne: "SDÍLET DETAILNÍ VÝSLEDEK", coffee: "☕ Pozvat autora na kafe", shareApp: "🔗 SDÍLET APLIKACI",
+                helpT: "Návod k použití",
+                helpB: "<li><b>Instalace:</b> Na iOS (Sdílet -> Zobrazit další -> Přidat na plochu), na Androidu (Menu -> Přidat na domovskou obrazovku).</li><li>Pro první spuštění buďte <b>online</b>, poté funguje i offline.</li><li>Zadejte počet terčů, šípů a střelce.</li><li><b>Vlastní bodování:</b> V nastavení můžete definovat vlastní hodnoty zásahů.</li><li><b>Pozor:</b> Historie se ukládá jen pro <b>1. zadaného střelce</b>, proto zadejte vždy sebe jako prvního.</li><li>Během závodu tlačítko <b>ZPĚT</b> vrátí špatně zadanou hodnotu.</li><li>Závod se ukončí a vyhodnotí automaticky. Výsledky lze sdílet.</li><li>Historie se ukládá lokálně. <b>Smazáním ikony z plochy o ni přijdete.</b></li><li>Dlouhým podržením v historii smažete záznam.</li>",
+                custBtn: "⚙️ VLASTNÍ BODOVÁNÍ", custTitle: "Nastavení bodování", custDesc: "Zadejte body oddělené čárkou (např: 11, 10, 8, 5, 0)", setBtn: "ULOŽIT A ZPĚT"
+            },
+            en: { 
+                title: "3D Archery Score", inT: "Targets", inA: "Arrows per target", inN: "Archer name", add: "ADD ARCHER", start: "START RACE", hist: "HISTORY", glob: "Total arrows:", arrows: "arrows", races: "Races:", exit: "EXIT RACE", fin: "🏆 RESULTS", share: "SHARE RESULTS", new: "NEW RACE", hTitle: "History (1st archer)", lp: "(long press to delete)", home: "HOME", clear: "CLEAR ALL", target: "Target", arrow: "Arrow", undo: "UNDO (LAST ARROW)", list: "Archers:", waiting: "waiting...", current: "CURRENT SCORE:", archersNone: "none", alertMiss: "Missing data!", confirmExit: "Confirm exit?", confirmNew: "New race?", confirmClear: "Clear all history?", confirmDel: "Delete this record?", shareOne: "SHARE DETAILED RESULT", coffee: "☕ Buy me a coffee", shareApp: "🔗 SHARE APP",
+                helpT: "Instructions",
+                helpB: "<li><b>Installation:</b> On iOS (Share -> Add to Home Screen), on Android (Menu -> Add to Home screen).</li><li>For the first launch, stay <b>online</b>, then it works offline.</li><li>Enter the number of targets, arrows, and archers.</li><li><b>Custom Scoring:</b> You can define your own scoring values in settings.</li><li><b>Note:</b> History is only saved for the <b>1st entered archer</b>, so always enter yourself first.</li><li>During the race, the <b>UNDO</b> button can revert a wrongly entered value.</li><li>The race ends and evaluates automatically. Results can be shared.</li><li>History is stored locally. <b>By deleting the app icon, you will lose your history.</b></li><li>Long press an item in history to delete the record.</li>",
+                custBtn: "⚙️ CUSTOM SCORING", custTitle: "Scoring Settings", custDesc: "Enter points separated by comma (e.g. 11, 10, 8, 5, 0)", setBtn: "SAVE AND BACK"
+            },
+            no: { 
+                title: "3D Bueskyting Score", inT: "Antall mål", inA: "Piler per mål", inN: "Navn på skytter", add: "LEGG TIL SKYTTER", start: "START KONKURRANSE", hist: "HISTORIKK", glob: "Totalt pilskudd:", arrows: "piler", races: "Konkurranser:", exit: "AVSLUTT", fin: "🏆 RESULTATER", share: "DEL RESULTATER", new: "NY KONKURRANSE", hTitle: "Historikk (1. skytter)", lp: "(hold inne for å slette)", home: "HJEM", clear: "SLETTE ALT", target: "Mål", arrow: "Pil", undo: "ANGRE (SISTE PIL)", list: "Skyttere:", waiting: "venter...", current: "STATUS:", archersNone: "ingen", alertMiss: "Mangler data!", confirmExit: "Bekreft avslutning?", confirmNew: "Ny konkurranse?", confirmClear: "Slette all historikk?", confirmDel: "Slette denne posten?", shareOne: "DEL DETALJERT RESULTAT", coffee: "☕ Spander en kaffe", shareApp: "🔗 DEL APPEN",
+                helpT: "Instruksjoner",
+                helpB: "<li><b>Installasjon:</b> På iOS (Del -> Legg til på hjemskjerm), på Android (Meny -> Legg til på hjemskjermen).</li><li>Vær <b>online</b> ved første oppstart, deretter fungerer den offline.</li><li>Skriv inn antall mål, piler og skyttere.</li><li><b>Egen poengsum:</b> Du kan definere egne poengverdier i innstillingene.</li><li><b>Merk:</b> Historikk lagres kun for <b>første skytter</b>. Legg alltid deg selv inn først.</li><li>Bruk <b>ANGRE</b>-knappen hvis du taster feil poeng.</li><li>Konkurransen avsluttes automatisk. Resultater kan deles.</li><li>Historikk lagres lokalt på telefonen.</li>",
+                custBtn: "⚙️ EGEN POENGSUM", custTitle: "Poenginnstillinger", custDesc: "Skriv poeng skilt med komma (f.eks. 11, 10, 8, 5, 0)", setBtn: "LAGRE OG TILBAKE"
+            }
+        };
+
+        let L = localStorage.getItem('arch_lang') || (navigator.language.startsWith('no') ? 'no' : (navigator.language.startsWith('en') ? 'en' : 'cs'));
         function changeLang(code) { localStorage.setItem('arch_lang', code); location.reload(); }
 
         function toggleHelp(show) {
@@ -245,36 +253,52 @@
             document.getElementById('t-helpTitle').innerText = T.helpT;
             document.getElementById('t-helpBody').innerHTML = T.helpB;
             
-            // PŘEKLAD NASTAVENÍ A TLAČÍTKA
             document.getElementById('t-custBtn').innerText = T.custBtn;
             document.getElementById('t-custTitle').innerText = T.custTitle;
             document.getElementById('t-custDesc').innerText = T.custDesc;
             document.getElementById('t-setSaveBtn').innerText = T.setBtn;
-            document.getElementById('inPoints').placeholder = T.inT === "Targets" ? "11, 10, 8, 5, 0" : "11, 10, 8, 5, 0";
+            document.getElementById('inPoints').placeholder = "11, 10, 8, 5, 0";
         }
 
         async function syncFirebase(arrows, raceVal = 0) {
+            const counterEl = document.getElementById('globalCounter');
+            const racesEl = document.getElementById('globalRaces');
+            
+            // Okamžitý offline start z paměti
+            if (!navigator.onLine && arrows === 0 && raceVal === 0) {
+                counterEl.innerText = localStorage.getItem('last_glob_a') || "0";
+                racesEl.innerText = localStorage.getItem('last_glob_r') || "0";
+                return;
+            }
+
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2500); 
+            const timeoutId = setTimeout(() => controller.abort(), 3000); 
+
             try {
                 const resp = await fetch(DB_URL, { signal: controller.signal });
                 const data = await resp.json();
                 clearTimeout(timeoutId);
+
                 let curA = (data && data.global_arrows) ? data.global_arrows : 0;
                 let curR = (data && data.global_races) ? data.global_races : 0;
+
                 if (arrows !== 0 || raceVal !== 0) {
                     curA += arrows; curR += raceVal;
                     fetch(DB_URL, { 
                         method: 'PATCH', 
                         body: JSON.stringify({ global_arrows: curA, global_races: curR }),
-                        signal: controller.signal 
-                    }).catch(e => console.log("Offline write"));
+                        keepalive: true
+                    });
                 }
-                document.getElementById('globalCounter').innerText = curA.toLocaleString();
-                document.getElementById('globalRaces').innerText = curR.toLocaleString();
+
+                localStorage.setItem('last_glob_a', curA);
+                localStorage.setItem('last_glob_r', curR);
+
+                counterEl.innerText = curA.toLocaleString();
+                racesEl.innerText = curR.toLocaleString();
             } catch (e) { 
-                document.getElementById('globalCounter').innerText = "offline";
-                document.getElementById('globalRaces').innerText = "offline";
+                counterEl.innerText = localStorage.getItem('last_glob_a') || "offline";
+                racesEl.innerText = localStorage.getItem('last_glob_r') || "offline";
             }
         }
 
@@ -282,6 +306,7 @@
         let targetLog = {}; let tc, ac, ct = 1, ci = 0, as = 0, canUndo = false;
         let pressTimer;
         let customPoints = [11, 10, 8, 5, 0];
+        const targetColors = ["#FFEBEE", "#E3F2FD", "#F1F8E9", "#FFF3E0", "#F3E5F5", "#E0F2F1", "#FFFDE7", "#F5F5F5"];
 
         window.onload = function() {
             let savedPoints = localStorage.getItem('archery_points');
@@ -291,6 +316,10 @@
             }
             applyTexts();
             syncFirebase(0, 0);
+            
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            }
         };
 
         function showSettings() { showScreen('sSettings'); }
@@ -302,8 +331,6 @@
             }
             showScreen('s1');
         }
-
-        const targetColors = ["#FFEBEE", "#E3F2FD", "#F1F8E9", "#FFF3E0", "#F3E5F5", "#E0F2F1", "#FFFDE7", "#F5F5F5"];
 
         function showScreen(id) {
             document.querySelectorAll('body > div').forEach(div => { if(div.id) div.style.display = 'none'; });
