@@ -99,13 +99,33 @@
             cursor: pointer; z-index: 999;
         }
         #helpModal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;
+            display: none; 
+            position: fixed; /* Toto je důležité - fixuje okno k obrazovce, ne k obsahu */
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            background: rgba(0,0,0,0.8); 
+            z-index: 1000; 
+            display: none; 
+            align-items: flex-start; /* Změněno z 'center' na 'flex-start' - začne nahoře */
+            justify-content: center;
             backdrop-filter: blur(4px);
+            padding-top: 50px; /* Mezera od horního okraje displeje */
+            box-sizing: border-box;
         }
+
         .help-content {
-            background: white; width: 85%; max-width: 400px; padding: 25px; border-radius: 20px;
-            text-align: left; position: relative; max-height: 80vh; overflow-y: auto;
+            background: white; 
+            width: 85%; 
+            max-width: 400px; 
+            padding: 25px; 
+            border-radius: 20px;
+            text-align: left; 
+            position: relative; 
+            max-height: 80vh; /* Maximálně 80% výšky obrazovky */
+            overflow-y: auto; /* Pokud je text dlouhý, dá se v něm scrollovat */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
         .help-content h3 { margin-top: 0; color: var(--primary); }
         .help-content ul { padding-left: 20px; line-height: 1.5; }
@@ -454,6 +474,10 @@
             saveHistory();
             syncFirebase(0, 1);
             document.body.style.backgroundColor = "#fff";
+            
+            // SKRYTÍ OTAZNÍKU NA OBRAZOVCE VÝSLEDKŮ
+            document.querySelector('.help-trigger').style.display = 'none';
+            
             showScreen('sFinish');
             let txt = "";
             let sorted = [...archers].sort((a,b) => scores[b] - scores[a]);
