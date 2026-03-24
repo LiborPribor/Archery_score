@@ -213,13 +213,21 @@
             no: { 
                 title: "3D Bueskyting Score", inT: "Antall mål", inA: "Piler per mål", inN: "Navn på skytter", add: "LEGG TIL SKYTTER", start: "START KONKURRANSE", hist: "HISTORIKK", glob: "Totalt pilskudd:", arrows: "piler", races: "Konkurranser:", exit: "AVSLUTT", fin: "🏆 RESULTATER", share: "DEL RESULTATER", new: "NY KONKURRANSE", hTitle: "Historikk (1. skytter)", lp: "(hold inne for å slette)", home: "HJEM", clear: "SLETTE ALT", target: "Mål", arrow: "Pil", undo: "ANGRE (SISTE PIL)", list: "Skyttere:", waiting: "venter...", current: "STATUS:", archersNone: "ingen", alertMiss: "Mangler data!", confirmExit: "Bekreft avslutning?", confirmNew: "Ny konkurranse?", confirmClear: "Slette all historikk?", confirmDel: "Slette denne posten?", shareOne: "DEL DETALJERT RESULTAT", coffee: "☕ Spander en kaffe", shareApp: "🔗 DEL APPEN",
                 helpT: "Instruksjoner",
-                helpB: "<li><b>Installasjon:</b> På iOS (Del -> Legg til på hjemskjerm), på Android (Meny -> Legg til på hjemskjermen).</li><li>Vær <b>online</b> ved første oppstart, deretter fungerer den offline.</li><li>Skriv inn antall mål, piler og skyttere.</li><li><b>Egen poengsum:</b> Du kan definere egne poengverdier i innstillingene.</li><li><b>Merk:</b> Historikk lagres kun for <b>første skytter</b>. Legg alltid deg selv inn først.</li><li>Bruk <b>ANGRE</b>-knappen hvis du taster feil poeng.</li><li>Konkurransen avsluttes automatisk. Resultater kan deles.</li><li>Historikk lagres lokalt på telefonen.</li>",
+                helpB: "<li><b>Installasjon:</b> På iOS (Del -> Legg til på hjemskjerm), na Androidu (Meny -> Legg til på hjemskjermen).</li><li>Vær <b>online</b> ved første oppstart, deretter fungerer den offline.</li><li>Skriv inn antall mål, piler og skyttere.</li><li><b>Egen poengsum:</b> Du kan definere egne poengverdier i innstillingene.</li><li><b>Merk:</b> Historikk lagres kun for <b>første skytter</b>. Legg alltid deg selv inn først.</li><li>Bruk <b>ANGRE</b>-knappen hvis du taster feil poeng.</li><li>Konkurransen avsluttes automatisk. Resultater kan deles.</li><li>Historikk lagres lokalt på telefonen.</li>",
                 custBtn: "⚙️ EGEN POENGSUM", custTitle: "Poenginnstillinger", custDesc: "Skriv poeng skilt med komma (f.eks. 11, 10, 8, 5, 0)", setBtn: "LAGRE OG TILBAKE"
             }
         };
 
         let L = localStorage.getItem('arch_lang') || (navigator.language.startsWith('no') ? 'no' : (navigator.language.startsWith('en') ? 'en' : 'cs'));
-        function changeLang(code) { localStorage.setItem('arch_lang', code); location.reload(); }
+        
+        // OPRAVENÁ FUNKCE PRO OFFLINE PŘEPÍNÁNÍ JAZYKA
+        function changeLang(code) { 
+            L = code;
+            localStorage.setItem('arch_lang', code); 
+            applyTexts();
+            if (document.getElementById('s2').style.display === 'block') updateUI();
+            if (document.getElementById('sHistory').style.display === 'block') renderHistory();
+        }
 
         function toggleHelp(show) {
             document.getElementById('helpModal').style.display = show ? 'flex' : 'none';
@@ -246,7 +254,7 @@
             document.getElementById('t-lpLabel').innerText = T.lp;
             document.getElementById('t-homeBtn').innerText = T.home;
             document.getElementById('t-clearBtn').innerText = T.clear;
-            document.getElementById('listDisplay').innerHTML = T.list + " " + T.archersNone;
+            document.getElementById('listDisplay').innerHTML = T.list + " " + (archers.length > 0 ? archers.join(", ") : T.archersNone);
             document.getElementById('t-coffeeBtn').innerText = T.coffee;
             document.getElementById('t-shareAppBtn1').innerText = T.shareApp;
             document.getElementById('t-shareAppBtn2').innerText = T.shareApp;
@@ -257,14 +265,12 @@
             document.getElementById('t-custTitle').innerText = T.custTitle;
             document.getElementById('t-custDesc').innerText = T.custDesc;
             document.getElementById('t-setSaveBtn').innerText = T.setBtn;
-            document.getElementById('inPoints').placeholder = "11, 10, 8, 5, 0";
         }
 
         async function syncFirebase(arrows, raceVal = 0) {
             const counterEl = document.getElementById('globalCounter');
             const racesEl = document.getElementById('globalRaces');
             
-            // Okamžitý offline start z paměti
             if (!navigator.onLine && arrows === 0 && raceVal === 0) {
                 counterEl.innerText = localStorage.getItem('last_glob_a') || "0";
                 racesEl.innerText = localStorage.getItem('last_glob_r') || "0";
@@ -316,10 +322,6 @@
             }
             applyTexts();
             syncFirebase(0, 0);
-            
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('sw.js').catch(() => {});
-            }
         };
 
         function showSettings() { showScreen('sSettings'); }
@@ -567,7 +569,18 @@
             ct = 1; ci = 0; as = 0; canUndo = false;
             document.body.style.backgroundColor = "#f4f4f9";
             showScreen('s1');
+            applyTexts();
         }
+    </script>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker zaregistrován!'))
+            .catch(err => console.log('Registrace SW selhala:', err));
+        });
+      }
     </script>
 </body>
 </html>
