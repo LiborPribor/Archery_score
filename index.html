@@ -32,6 +32,11 @@
         .btn-ok { background: #333; color: #fff; border: 1px solid #555; }
         .btn-challenge { background: #ff00ff; color: #fff; box-shadow: 0 0 15px rgba(255,0,255,0.4); }
 
+        /* Login Overlay */
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
+        .login-box { text-align: center; width: 80%; max-width: 300px; }
+        .login-input { background: #111; border: 1px solid #ff00ff; padding: 15px; border-radius: 8px; color: #fff; width: 100%; margin-bottom: 15px; box-sizing: border-box; text-align: center; font-size: 18px; }
+
         #side-menu { position: absolute; top: 0; left: -100%; width: 85%; height: 100%; background: #0a0a0a; z-index: 100; transition: 0.3s; padding: 40px 20px; pointer-events: auto; border-right: 1px solid #ff00ff; box-sizing: border-box; overflow-y: auto; }
         #side-menu.open { left: 0; }
         
@@ -46,6 +51,14 @@
 </head>
 <body>
 
+<div id="login-overlay">
+    <div class="login-box glass-panel">
+        <h2 style="color:#ff00ff; margin-top:0">NEON KNOT</h2>
+        <input type="text" id="player-name-input" class="login-input" placeholder="Zadej své jméno..." maxlength="12">
+        <button class="btn btn-challenge" style="width:100%" onclick="savePlayerName()">VSTOUPIT DO HRY</button>
+    </div>
+</div>
+
 <canvas id="gameCanvas"></canvas>
 
 <div id="side-menu">
@@ -56,7 +69,7 @@
     <button class="btn btn-challenge" style="width:100%" onclick="shareGame('Vyzývám tě na souboj v Neon Knot!')">VYZVAT KAMARÁDA</button>
 
     <div class="friends-list">
-        <div style="font-size: 12px; color: #888; margin-bottom: 10px;">ŽEBRÁČEK PŘÁTEL (NEJLEPŠÍ)</div>
+        <div style="font-size: 12px; color: #888; margin-bottom: 10px;">ŽEBRÁČEK PŘÁTEL (TOP 10)</div>
         <div id="friends-data">Načítám přátele...</div>
     </div>
 </div>
@@ -74,7 +87,7 @@
         <div id="score-display">0%</div>
         <div class="action-btns">
             <button class="btn btn-ok" onclick="resetBoard()">Znovu</button>
-            <button class="btn btn-challenge" onclick="shareGame('Koukej na můj nejlepší pokus!')">Sdílet</button>
+            <button class="btn btn-challenge" onclick="shareGame('Koukej na můj nejlepší pokus!')">Sdílet / Vyzvat</button>
         </div>
     </div>
 
@@ -92,18 +105,30 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
-    // Identifikace a Jméno
-    let userName = localStorage.getItem('neon_name') || 'Hráč_' + Math.random().toString(36).substr(2, 4);
-    if (!localStorage.getItem('neon_name')) {
-        const inputName = prompt("Zadej své jméno pro žebříček:", "Hráč");
-        if(inputName) { userName = inputName; localStorage.setItem('neon_name', userName); }
-    }
-    document.getElementById('menu-user-name').innerText = userName;
-
+    let userName = localStorage.getItem('neon_name');
     const userId = localStorage.getItem('neon_uid') || 'u_' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('neon_uid', userId);
 
-    // Denní řada (Plamínek)
+    // Pokud jméno už máme, schováme login hned
+    if (userName) {
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('menu-user-name').innerText = userName;
+    }
+
+    function savePlayerName() {
+        const input = document.getElementById('player-name-input').value.trim();
+        if (input.length > 1) {
+            userName = input;
+            localStorage.setItem('neon_name', userName);
+            document.getElementById('menu-user-name').innerText = userName;
+            document.getElementById('login-overlay').style.display = 'none';
+            db.ref(`users/${userId}/name`).set(userName);
+        } else {
+            alert("Zadej prosím platné jméno.");
+        }
+    }
+
+    // Denní řada
     function updateStreak() {
         const today = new Date().toDateString();
         const lastDate = localStorage.getItem('last_play_date');
@@ -122,8 +147,7 @@
             db.ref(`users/${userId}/streak`).set(streak);
         }
         document.getElementById('streak-val').innerText = streak;
-        const extraAttempts = Math.floor(streak / 20);
-        document.getElementById('bonus-info').innerText = "POKUSY NAVÍC: " + extraAttempts;
+        document.getElementById('bonus-info').innerText = "POKUSY NAVÍC: " + Math.floor(streak / 20);
     }
     updateStreak();
 
@@ -131,16 +155,19 @@
     db.ref(`users/${userId}/bestScore`).on('value', snap => {
         bestEver = snap.val() || 0;
         document.getElementById('all-time-best').innerText = bestEver + "%";
-        db.ref(`users/${userId}/name`).set(userName);
     });
 
-    // Načítání přátel do menu
-    db.ref('users').limitToLast(10).on('value', snap => {
+    // Žebráček (Globální žebříček)
+    db.ref('users').orderByChild('bestScore').limitToLast(10).on('value', snap => {
         const users = snap.val();
+        let list = [];
+        for (let id in users) list.push(users[id]);
+        list.sort((a,b) => b.bestScore - a.bestScore);
+        
         let html = '';
-        for (let id in users) {
-            html += `<div class="friend-row"><span>${users[id].name || 'Anonym'}</span><span style="color:#ff00ff">${users[id].bestScore || 0}%</span></div>`;
-        }
+        list.forEach(u => {
+            html += `<div class="friend-row"><span>${u.name || 'Anonym'}</span><span style="color:#ff00ff">${u.bestScore || 0}%</span></div>`;
+        });
         document.getElementById('friends-data').innerHTML = html;
     });
 
@@ -152,7 +179,7 @@
     canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
     canvas.addEventListener('touchstart', e => {
-        if (isFinished) return;
+        if (isFinished || !userName) return;
         if (!isDrawing) { ctx.clearRect(0,0,canvas.width, canvas.height); playerTrace = []; }
         isDrawing = true;
         playerTrace.push({x: e.touches[0].clientX, y: e.touches[0].clientY});
@@ -172,13 +199,14 @@
         isDrawing = false;
     });
 
-    // --- ZDE JE TVÁ ZACHOVANÁ LOGIKA HODNOCENÍ ---
+    // --- ZACHOVANÁ LOGIKA HODNOCENÍ ---
     function evaluate() {
         isFinished = true;
         let minX = Math.min(...playerTrace.map(p=>p.x)), maxX = Math.max(...playerTrace.map(p=>p.x));
         let minY = Math.min(...playerTrace.map(p=>p.y)), maxY = Math.max(...playerTrace.map(p=>p.y));
         let drawW = maxX - minX, drawH = maxY - minY;
-        if (drawW < 80 || drawH < 80) { showScore(Math.floor(Math.random()*5)); return; }
+        
+        if (drawW < 80 || drawH < 80) { showScore(0); return; }
 
         let size = Math.max(drawW, drawH, 50);
         let centerX = minX + drawW / 2;
@@ -198,6 +226,7 @@
         const corners = [{x:50,y:10}, {x:85,y:40}, {x:50,y:95}, {x:15,y:40}];
         let cornersHit = 0;
         corners.forEach(c => { if (normPlayer.some(p => Math.hypot(p.x - c.x, p.y - c.y) < 14)) cornersHit++; });
+        
         let distances = normPlayer.map(p => Math.hypot(p.x - 50, p.y - 50));
         let maxR = Math.max(...distances), minR = Math.min(...distances);
         let radiusVariance = maxR - minR;
@@ -210,21 +239,11 @@
         let finalScore = Math.round(Math.max(0, score));
         showScore(finalScore);
 
-        // Vykreslení jména a výsledku přímo na canvas pro screenshot
-        ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-        ctx.font = "bold 20px Arial";
+        // Screenshot label
+        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+        ctx.font = "bold 16px Segoe UI";
         ctx.textAlign = "center";
-        ctx.fillText(userName + " - " + finalScore + "%", canvas.width/2, canvas.height - 50);
-
-        // Vykreslení "ducha"
-        ctx.setLineDash([8, 8]); ctx.strokeStyle = 'rgba(255, 0, 255, 0.4)'; ctx.lineWidth = 2; ctx.shadowBlur = 0;
-        ctx.beginPath();
-        targetShape.forEach((p, i) => {
-            let rx = ((p.x - 50) / 80) * size + centerX;
-            let ry = ((p.y - 50) / 80) * size + centerY;
-            i === 0 ? ctx.moveTo(rx, ry) : ctx.lineTo(rx, ry);
-        });
-        ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillText(userName.toUpperCase() + " • " + finalScore + "%", canvas.width/2, canvas.height - 40);
     }
 
     function distToSegment(p, v, w) {
@@ -261,7 +280,7 @@
     drawRef();
 
     function shareGame(msg) {
-        const text = `${msg} Moje nejlepší skóre je ${bestEver}%. Porazíš mě? #NeonKnot`;
+        const text = `${msg} Jsem ${userName} a dal jsem ${bestEver}%. Porazíš mě?`;
         if (navigator.share) {
             navigator.share({ title: 'Neon Knot Challenge', text: text, url: window.location.href });
         } else {
